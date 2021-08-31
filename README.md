@@ -1,2 +1,2 @@
 # schedule_bot
-Telegram bot and gui interface for schedules.
+ Telegram bot and gui interface for make schedules.
