@@ -165,6 +165,14 @@ class Schedule:
         d1 = datetime.timedelta(hours=stime.hour, minutes=stime.minute, seconds=stime.second)
         d2 = datetime.timedelta(hours=etime.hour, minutes=etime.minute, seconds=etime.second)
         return (datetime.datetime.min + (d1 - d2)).time()
+
+    @staticmethod
+    def lesson_time(lesson_num: int, format: str = "%H:%M") -> tuple:
+        return (
+            Schedule.lesson_begins[lesson_num].strftime(format),
+            Schedule.lesson_ends[lesson_num].strftime(format),
+            )
+        
                 
 
 if __name__ == "__main__":
