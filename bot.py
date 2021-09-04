@@ -7,9 +7,11 @@ from manager import Manager
 from schedule import Schedule
 from db import ActiveUser
 
-KEY = "" # bot token
+import info # personal information
 
-ADMINS = [] # telegram ids here
+KEY: str = info.KEY # bot token
+
+ADMINS: list = info.ADMINS # list of telegram ids here
 
 logging.basicConfig(level = logging.DEBUG)
 
