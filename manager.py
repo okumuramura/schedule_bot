@@ -44,7 +44,7 @@ class Manager:
                 (db.Schedule.weekday == weekday) &
                 (db.Schedule.on_line == on_line) &
                 (db.Schedule.num > num)
-            ).order_by(db.Schedule.num).first()
+            ).first()
             return lesson, next_lesson
         return lesson
 
