@@ -6,7 +6,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy import select
 
-import schedule
 from times import Times
 
 
