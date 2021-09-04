@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, relationship
 from sqlalchemy import select
 
 import schedule
+from times import Times
 
 
 metadata = MetaData()
@@ -203,7 +204,7 @@ class Schedule(Base):
         ltype = f"({self.lesson_type.type}) " if self.lesson_type else ""
         author = f"{self.author.name} " if self.author else ""
         classroom = self.classroom if self.classroom else ""
-        lesson_time = schedule.Schedule.lesson_time(self.num)
+        lesson_time = Times.lesson_time(self.num)
         return f"{lesson_time[0]}-{lesson_time[1]}\n{self.num}. {self.lesson.name} {author}{ltype}{classroom}"
 
     def just_name(self) -> str:

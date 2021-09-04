@@ -1,3 +1,5 @@
+from times import Times
+
 import datetime
 
 # from sqlalchemy.sql.elements import Null
@@ -63,30 +65,10 @@ class NowAndNext:
 
 class Schedule:
 
-    lesson_begins = [
-        datetime.time(8, 30, 0),
-        datetime.time(10, 10, 0),
-        datetime.time(12, 20, 0),
-        datetime.time(14, 0, 0),
-        datetime.time(15, 40, 0),
-        datetime.time(17, 20, 0),
-        datetime.time(19, 0, 0)
-    ]
-
-    lesson_ends = [
-        datetime.time(10, 0, 0),
-        datetime.time(11, 40, 0),
-        datetime.time(13, 50, 0),
-        datetime.time(15, 30, 0),
-        datetime.time(17, 10, 0),
-        datetime.time(18, 50, 0),
-        datetime.time(20, 30, 0)
-    ]
-
     def __init__(self):
         self.manager = Manager("sqlite:///lessons.db")
         self._time_schedule = ""
-        for i, (b, e) in enumerate(zip(self.lesson_begins, self.lesson_ends)):
+        for i, (b, e) in enumerate(zip(Times.lesson_begins, Times.lesson_ends)):
             self._time_schedule += f"{i+1}. {b.strftime('%H:%M')} - {e.strftime('%H:%M')}\n"
 
         
@@ -100,22 +82,22 @@ class Schedule:
         #weekday = 2
         #now_time = datetime.time(8, 40, 23)
         cur_lesson = -1
-        for i, (b, e) in enumerate(zip(self.lesson_begins, self.lesson_ends)):
+        for i, (b, e) in enumerate(zip(Times.lesson_begins, Times.lesson_ends)):
             if now_time <= e:
                 cur_lesson = i + 1
                 break
         now_lesson, next_lesson = self.manager.get_lesson_by_num(
             group, weekday - 1, self.is_overline(week), cur_lesson, next = True
         )
-        if not (self.lesson_begins[cur_lesson - 1] <= now_time <= self.lesson_ends[cur_lesson - 1]):
+        if not (Times.lesson_begins[cur_lesson - 1] <= now_time <= Times.lesson_ends[cur_lesson - 1]):
             now_lesson, next_lesson = None, now_lesson
         if now_lesson is not None:
-            time_remain = self.time_delta(self.lesson_ends[cur_lesson - 1], now_time)
+            time_remain = self.time_delta(Times.lesson_ends[cur_lesson - 1], now_time)
         else:
             time_remain = None
         
         if next_lesson is not None:
-            time_until = self.time_delta(self.lesson_begins[next_lesson.num - 1], now_time)
+            time_until = self.time_delta(Times.lesson_begins[next_lesson.num - 1], now_time)
         else:
             time_until = None
 
@@ -166,12 +148,6 @@ class Schedule:
         d2 = datetime.timedelta(hours=etime.hour, minutes=etime.minute, seconds=etime.second)
         return (datetime.datetime.min + (d1 - d2)).time()
 
-    @staticmethod
-    def lesson_time(lesson_num: int, format: str = "%H:%M") -> tuple:
-        return (
-            Schedule.lesson_begins[lesson_num].strftime(format),
-            Schedule.lesson_ends[lesson_num].strftime(format),
-            )
         
                 
 
