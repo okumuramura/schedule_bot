@@ -24,6 +24,6 @@ class Times:
     @staticmethod
     def lesson_time(lesson_num: int, format: str = "%H:%M") -> tuple:
         return (
-            Times.lesson_begins[lesson_num + 1].strftime(format),
-            Times.lesson_ends[lesson_num + 1].strftime(format),
+            Times.lesson_begins[lesson_num - 1].strftime(format),
+            Times.lesson_ends[lesson_num - 1].strftime(format),
             )
