@@ -204,7 +204,7 @@ class Schedule(Base):
         author = f"{self.author.name} " if self.author else ""
         classroom = self.classroom if self.classroom else ""
         lesson_time = Times.lesson_time(self.num)
-        return f"{lesson_time[0]}-{lesson_time[1]}\n{self.num}. {self.lesson.name} {author}{ltype}{classroom}"
+        return f"{self.num}. {lesson_time[0]}-{lesson_time[1]}\n{self.lesson.name} {author}{ltype}{classroom}"
 
     def just_name(self) -> str:
         ltype = f"({self.lesson_type.type})" if self.lesson_type else ""
