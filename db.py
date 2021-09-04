@@ -6,6 +6,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy import select
 
+import schedule
+
 
 metadata = MetaData()
 Base = declarative_base()
@@ -201,11 +203,13 @@ class Schedule(Base):
         ltype = f"({self.lesson_type.type}) " if self.lesson_type else ""
         author = f"{self.author.name} " if self.author else ""
         classroom = self.classroom if self.classroom else ""
-        return f"{self.num}. {self.lesson.name} {author}{ltype}{classroom}"
+        lesson_time = schedule.Schedule.lesson_time(self.num)
+        return f"{lesson_time[0]}-{lesson_time[1]}\n{self.num}. {self.lesson.name} {author}{ltype}{classroom}"
 
     def just_name(self) -> str:
         ltype = f"({self.lesson_type.type})" if self.lesson_type else ""
-        return f"{self.lesson.name} {ltype}"
+        classroom = self.classroom if self.classroom else ""
+        return f"{self.lesson.name} {ltype}{classroom}"
 
     def try_get_corps(self, classroom):
         return None
