@@ -205,7 +205,7 @@ async def inline_back(callback: types.CallbackQuery):
     await bot.edit_message_text(
         "Какое расписание вам нужно?", 
         chat_id = callback.from_user.id,
-        message_id = callback.inline_message_id,
+        message_id = callback.message.message_id,
         reply_markup=keyboard.SCHEDULE_KEYBOARD
         )
     
@@ -216,7 +216,7 @@ async def process_schedule(callback: types.CallbackQuery):
     await bot.answer_callback_query(callback.id)
     d, l = int(callback.data[0]), int(callback.data[1])
     user_id = callback.from_user.id
-    message_id = callback.inline_message_id
+    message_id = callback.message.message_id
     if d == 9:
         await bot.edit_message_text(
             schedule.time_schedule(),
