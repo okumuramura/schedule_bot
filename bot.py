@@ -2,7 +2,6 @@ from aiogram import Bot, Dispatcher, executor, types
 from aiogram.utils.emoji import emojize
 import logging
 
-
 from manager import Manager
 from schedule import Schedule
 from db import ActiveUser
@@ -15,8 +14,6 @@ ADMINS: list = info.ADMINS # list of telegram ids here
 
 logging.basicConfig(level = logging.DEBUG)
 
-
-
 class BotState:
     REGISTER = 0
     IDLE = 1
@@ -25,6 +22,7 @@ class Keyboard:
     def __init__(self):
         self.IDLE_KEYBOARD = types.ReplyKeyboardMarkup(resize_keyboard=True)
         self.SCHEDULE_KEYBOARD = types.InlineKeyboardMarkup(row_width=2)
+        self.BACK_KEYBOARD = types.InlineKeyboardMarkup(row_width=1)
 
         self.IDLE_KEYBOARD.row(
             types.KeyboardButton(text="Сегодня"),
@@ -71,6 +69,10 @@ class Keyboard:
 
         self.SCHEDULE_KEYBOARD.add(
             types.InlineKeyboardButton("Неделя", callback_data="88")
+        )
+
+        self.BACK_KEYBOARD.add(
+            types.InlineKeyboardButton("Назад", callback_data="back")
         )
 
 
@@ -197,20 +199,44 @@ async def message_handler(msg: types.Message):
         else:
             await bot.send_message(user_id, "Не получается найти группу с таким именем :(")
 
+@dp.callback_query_handler(lambda c: c.data == "back")
+async def inline_back(callback: types.CallbackQuery):
+    await bot.answer_callback_query(callback.id)
+    await bot.edit_message_text(
+        "Какое расписание вам нужно?", 
+        chat_id = callback.from_user.id,
+        message_id = callback.inline_message_id,
+        reply_markup=keyboard.SCHEDULE_KEYBOARD
+        )
+    
+
 
 @dp.callback_query_handler()
 async def process_schedule(callback: types.CallbackQuery):
     await bot.answer_callback_query(callback.id)
     d, l = int(callback.data[0]), int(callback.data[1])
     user_id = callback.from_user.id
+    message_id = callback.inline_message_id
     if d == 9:
-        await bot.send_message(user_id, schedule.time_schedule(), reply_markup=keyboard.IDLE_KEYBOARD)
-    elif d == 8:
-        await bot.send_message(
-            user_id, 
-            f"Сейчас неделя {'над' if schedule.is_overline() else 'под'} чертой", 
-            reply_markup=keyboard.IDLE_KEYBOARD
+        await bot.edit_message_text(
+            schedule.time_schedule(),
+            chat_id=user_id,
+            message_id=message_id,
+            reply_markup=keyboard.BACK_KEYBOARD
             )
+        # await bot.send_message(user_id, schedule.time_schedule(), reply_markup=keyboard.IDLE_KEYBOARD)
+    elif d == 8:
+        await bot.edit_message_text(
+           f"Сейчас неделя {'над' if schedule.is_overline() else 'под'} чертой", 
+           chat_id=user_id,
+           message_id=message_id,
+           reply_markup=keyboard.BACK_KEYBOARD     
+        )
+        # await bot.send_message(
+        #     user_id, 
+        #     f"Сейчас неделя {'над' if schedule.is_overline() else 'под'} чертой", 
+        #     reply_markup=keyboard.IDLE_KEYBOARD
+        #     )
     else:
         user_info: ActiveUser
         data = manager.get_user(user_id)
@@ -221,9 +247,21 @@ async def process_schedule(callback: types.CallbackQuery):
             if user_info.state == BotState.IDLE and user_group is not None:
                 sch = schedule.day_schedule(user_group.group, d, bool(l))
                 if len(sch) == 0:
-                    await bot.send_message(user_id, "В этот день у вас нет пар", reply_markup=keyboard.IDLE_KEYBOARD)
+                    await bot.edit_message_text(
+                        "В этот день у вас нет пар",
+                        chat_id=user_id,
+                        message_id=message_id, 
+                        reply_markup=keyboard.BACK_KEYBOARD
+                    )
+                    #await bot.send_message(user_id, "В этот день у вас нет пар", reply_markup=keyboard.IDLE_KEYBOARD)
                 else:
-                    await bot.send_message(user_id, "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
+                    await bot.edit_message_text(
+                        "\n\n".join(sch),
+                        chat_id=user_id,
+                        message_id=message_id, 
+                        reply_markup=keyboard.BACK_KEYBOARD
+                    )
+                    #await bot.send_message(user_id, "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
             else:
                 await bot.send_message(user_id, "Вы ещё не указали свою группу!")
 
