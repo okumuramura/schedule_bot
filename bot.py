@@ -113,9 +113,9 @@ async def today_handler(msg: types.Message):
         if user_info.state == BotState.IDLE and user_group is not None:
             sch = schedule.today(user_group.group)
             if len(sch) == 0:
-                await bot.send_message(user_id, "Сегодня у вас нет пар ;)")
+                await bot.send_message(user_id, "Сегодня у вас нет пар ;)", reply_markup=keyboard.IDLE_KEYBOARD)
             else:
-                await bot.send_message(user_id, "\n\n".join(sch))
+                await bot.send_message(user_id, "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
         else:
             await bot.send_message(user_id, "Вы ещё не указали свою группу!")
 
@@ -125,15 +125,15 @@ async def tomorrow_handler(msg: types.Message):
     user_info: ActiveUser
     data = manager.get_user(user_id)
     if data is None:
-        add_user_critical(user_id)
+        await add_user_critical(user_id)
     else:
         user_info, user_group = data
         if user_info.state == BotState.IDLE and user_group is not None:
             sch = schedule.tomorrow(user_group.group)
             if (len(sch) == 0):
-                await bot.send_message(user_id, "Завтра у вас нет пар\nПовезло повезло")
+                await bot.send_message(user_id, "Завтра у вас нет пар\nПовезло повезло", reply_markup=keyboard.IDLE_KEYBOARD)
             else:
-                await bot.send_message(user_id, "\n\n".join(sch))
+                await bot.send_message(user_id, "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
         else:
             await bot.send_message(user_id, "Вы ещё не указали свою группу!")
 
@@ -143,12 +143,12 @@ async def now_handler(msg: types.Message):
     user_info: ActiveUser
     data = manager.get_user(user_id)
     if data is None:
-        add_user_critical(user_id)
+        await add_user_critical(user_id)
     else:
         user_info, user_group = data
         if user_info.state == BotState.IDLE and user_group is not None:
             now = schedule.now(user_group.group)
-            await bot.send_message(user_id, now)
+            await bot.send_message(user_id, now, reply_markup=keyboard.IDLE_KEYBOARD)
         else:
             await bot.send_message(user_id, "Вы ещё не указали свою группу!")
 
@@ -159,7 +159,7 @@ async def schedule_handler(msg: types.Message):
     user_info: ActiveUser
     data = manager.get_user(user_id)
     if data is None:
-        add_user_critical(user_id)
+        await add_user_critical(user_id)
     else:
         user_info, user_group = data
         if user_info.state == BotState.IDLE and user_group is not None:
@@ -179,7 +179,7 @@ async def masssend_handler(msg: types.Message):
         all_users = manager.get_all_users()
         for user in all_users:
             await bot.send_message(user.tid, text)
-        await bot.send_message(user_id, "ok!")
+        await bot.send_message(user_id, "ok!", reply_markup=keyboard.IDLE_KEYBOARD)
             
     
 
@@ -204,22 +204,26 @@ async def process_schedule(callback: types.CallbackQuery):
     d, l = int(callback.data[0]), int(callback.data[1])
     user_id = callback.from_user.id
     if d == 9:
-        await bot.send_message(user_id, schedule.time_schedule())
+        await bot.send_message(user_id, schedule.time_schedule(), reply_markup=keyboard.IDLE_KEYBOARD)
     elif d == 8:
-        await bot.send_message(user_id, f"Сейчас неделя {'над' if schedule.is_overline() else 'под'} чертой")
+        await bot.send_message(
+            user_id, 
+            f"Сейчас неделя {'над' if schedule.is_overline() else 'под'} чертой", 
+            reply_markup=keyboard.IDLE_KEYBOARD
+            )
     else:
         user_info: ActiveUser
         data = manager.get_user(user_id)
         if data is None:
-            add_user_critical(user_id)
+            await add_user_critical(user_id)
         else:
             user_info, user_group = data
             if user_info.state == BotState.IDLE and user_group is not None:
                 sch = schedule.day_schedule(user_group.group, d, bool(l))
                 if len(sch) == 0:
-                    await bot.send_message(user_id, "В этот день у вас нет пар")
+                    await bot.send_message(user_id, "В этот день у вас нет пар", reply_markup=keyboard.IDLE_KEYBOARD)
                 else:
-                    await bot.send_message(user_id, "\n\n".join(sch))
+                    await bot.send_message(user_id, "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
             else:
                 await bot.send_message(user_id, "Вы ещё не указали свою группу!")
 
