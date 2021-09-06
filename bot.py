@@ -134,7 +134,7 @@ async def tomorrow_handler(msg: types.Message):
         user_info, user_group = data
         if user_info.state == BotState.IDLE and user_group is not None:
             sch = schedule.tomorrow(user_group.group)
-            message_top = f"{Times.tomorrow_weekday()}. {'Над' if schedule.is_overline() else 'Под'} чертой.\n\n"
+            message_top = f"{Times.tomorrow_weekday()}. {'Над' if schedule.is_overline(add=1) else 'Под'} чертой.\n\n"
             if (len(sch) == 0):
                 await bot.send_message(
                     user_id, 
