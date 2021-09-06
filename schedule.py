@@ -72,8 +72,11 @@ class Schedule:
             self._time_schedule += f"{i+1}. {b.strftime('%H:%M')} - {e.strftime('%H:%M')}\n"
 
         
-    def date(self):
-        week, weekday = datetime.datetime.now().isocalendar()[1:]
+    def date(self, add = 0):
+        if add == 0:
+            week, weekday = datetime.datetime.now().isocalendar()[1:]
+        else:
+            week, weekday = (datetime.datetime.now() + datetime.timedelta(days=1)).isocalendar()[1:]
         return week, weekday
 
     def now(self, group):
@@ -137,9 +140,9 @@ class Schedule:
     def time_schedule(self):
         return self._time_schedule
 
-    def is_overline(self, week = None):
+    def is_overline(self, week = None, add = 0):
         if week is None:
-            return True if self.date()[0] % 2 != 0 else False
+            return True if self.date(add = add)[0] % 2 != 0 else False
         else:
             return not week % 2 == 0
 
