@@ -209,7 +209,7 @@ class Schedule(Base):
     def just_name(self) -> str:
         ltype = f"({self.lesson_type.type})" if self.lesson_type else ""
         classroom = self.classroom if self.classroom else ""
-        return f"{self.lesson.name} {ltype}{classroom}"
+        return f"{self.lesson.name} {ltype} {classroom}"
 
     def try_get_corps(self, classroom):
         return None
