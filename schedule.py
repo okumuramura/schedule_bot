@@ -89,7 +89,8 @@ class Schedule:
         now_lesson, next_lesson = self.manager.get_lesson_by_num(
             group, weekday - 1, self.is_overline(week), cur_lesson, next = True
         )
-        if not (Times.lesson_begins[cur_lesson - 1] <= now_time <= Times.lesson_ends[cur_lesson - 1]):
+        if (not (Times.lesson_begins[cur_lesson - 1] <= now_time <= Times.lesson_ends[cur_lesson - 1])
+            and now_lesson is not None):
             now_lesson, next_lesson = None, now_lesson
         if now_lesson is not None:
             time_remain = self.time_delta(Times.lesson_ends[cur_lesson - 1], now_time)
