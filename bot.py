@@ -5,6 +5,7 @@ import logging
 from manager import Manager
 from schedule import Schedule
 from db import ActiveUser
+from times import Times
 
 import info # personal information
 
@@ -114,10 +115,11 @@ async def today_handler(msg: types.Message):
         user_info, user_group = data
         if user_info.state == BotState.IDLE and user_group is not None:
             sch = schedule.today(user_group.group)
+            message_top = f"{Times.today_weekday()}. {'Над' if schedule.is_overline() else 'Под'} чертой.\n\n"
             if len(sch) == 0:
-                await bot.send_message(user_id, "Сегодня у вас нет пар ;)", reply_markup=keyboard.IDLE_KEYBOARD)
+                await bot.send_message(user_id, message_top + "Сегодня у вас нет пар ;)", reply_markup=keyboard.IDLE_KEYBOARD)
             else:
-                await bot.send_message(user_id, "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
+                await bot.send_message(user_id, message_top + "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
         else:
             await bot.send_message(user_id, "Вы ещё не указали свою группу!")
 
@@ -132,10 +134,19 @@ async def tomorrow_handler(msg: types.Message):
         user_info, user_group = data
         if user_info.state == BotState.IDLE and user_group is not None:
             sch = schedule.tomorrow(user_group.group)
+            message_top = f"{Times.tomorrow_weekday()}. {'Над' if schedule.is_overline() else 'Под'} чертой.\n\n"
             if (len(sch) == 0):
-                await bot.send_message(user_id, "Завтра у вас нет пар\nПовезло повезло", reply_markup=keyboard.IDLE_KEYBOARD)
+                await bot.send_message(
+                    user_id, 
+                    message_top + "Завтра у вас нет пар\nПовезло повезло", 
+                    reply_markup=keyboard.IDLE_KEYBOARD
+                    )
             else:
-                await bot.send_message(user_id, "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
+                await bot.send_message(
+                    user_id, 
+                    message_top + "\n\n".join(sch), 
+                    reply_markup=keyboard.IDLE_KEYBOARD
+                    )
         else:
             await bot.send_message(user_id, "Вы ещё не указали свою группу!")
 
@@ -232,11 +243,6 @@ async def process_schedule(callback: types.CallbackQuery):
            message_id=message_id,
            reply_markup=keyboard.BACK_KEYBOARD     
         )
-        # await bot.send_message(
-        #     user_id, 
-        #     f"Сейчас неделя {'над' if schedule.is_overline() else 'под'} чертой", 
-        #     reply_markup=keyboard.IDLE_KEYBOARD
-        #     )
     else:
         user_info: ActiveUser
         data = manager.get_user(user_id)
@@ -246,17 +252,17 @@ async def process_schedule(callback: types.CallbackQuery):
             user_info, user_group = data
             if user_info.state == BotState.IDLE and user_group is not None:
                 sch = schedule.day_schedule(user_group.group, d, bool(l))
+                message_top = f"{Times.weekdays[d]}. {'Над' if bool(l) else 'Под'} чертой.\n\n"
                 if len(sch) == 0:
                     await bot.edit_message_text(
-                        "В этот день у вас нет пар",
+                        message_top + "В этот день у вас нет пар",
                         chat_id=user_id,
                         message_id=message_id, 
                         reply_markup=keyboard.BACK_KEYBOARD
                     )
-                    #await bot.send_message(user_id, "В этот день у вас нет пар", reply_markup=keyboard.IDLE_KEYBOARD)
                 else:
                     await bot.edit_message_text(
-                        "\n\n".join(sch),
+                        message_top + "\n\n".join(sch),
                         chat_id=user_id,
                         message_id=message_id, 
                         reply_markup=keyboard.BACK_KEYBOARD

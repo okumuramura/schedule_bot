@@ -1,6 +1,16 @@
 import datetime
 
 class Times:
+    weekdays = [
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница",
+        "Суббота",
+        "Воскресенье"
+    ]
+
     lesson_begins = [
         datetime.time(8, 30, 0),
         datetime.time(10, 10, 0),
@@ -27,3 +37,10 @@ class Times:
             Times.lesson_begins[lesson_num - 1].strftime(format),
             Times.lesson_ends[lesson_num - 1].strftime(format),
             )
+
+    @staticmethod
+    def today_weekday() -> str:
+        return Times.weekdays[datetime.datetime.today().weekday()]
+
+    def tomorrow_weekday() -> str:
+        return Times.weekdays[(datetime.datetime.today().weekday() + 1) % 7]
