@@ -93,8 +93,10 @@ keyboard = Keyboard()
 async def morning_greeting():
     message_template = textwrap.dedent("""\
     Доброе утро! Сегодня {weekday}, {date}.
+
     {header}
     {schedule}
+    
     {end}
     """)
     user_info: ActiveUser

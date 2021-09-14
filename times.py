@@ -65,7 +65,7 @@ class Times:
     def today_month(case = "nominative") -> str:
         allowed_cases = ["nominative", "genitive"]
         if case in allowed_cases:
-            return Times.months[(datetime.datetime.today().month - 1)]
+            return Times.months[(datetime.datetime.today().month - 1)].get(case)
         else:
             assert KeyError(f"Wrong case!, allowed: {', '.join(allowed_cases)}.")
 
