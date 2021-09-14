@@ -1,6 +1,8 @@
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.utils.emoji import emojize
 import logging
+import aioschedule
+import asyncio
 
 from manager import Manager
 from schedule import Schedule
@@ -12,6 +14,8 @@ import info # personal information
 KEY: str = info.KEY # bot token
 
 ADMINS: list = info.ADMINS # list of telegram ids here
+
+VIP: list = []
 
 logging.basicConfig(level = logging.DEBUG)
 
@@ -84,6 +88,29 @@ manager = Manager("sqlite:///lessons.db")
 schedule = Schedule()
 
 keyboard = Keyboard()
+
+async def morning_greeting():
+    message_template = """Доброе утро! Сегодня {weekday}, {date}.
+    {header}
+    {schedule}
+    {end}
+    """
+    user_info: ActiveUser
+    for vip_user in VIP:
+        data = manager.get_user(vip_user)
+        if data is not None:
+            user_info, user_group = data
+            if user_group is not None:
+                sch = schedule.today(user_group.group)
+                message = message_template.format(
+                    weekday = Times.today_weekday,
+                    date = Times.today_date,
+                    header = "Сегодня у вас нет пар" if len(sch) == 0 else "Ваше расписание на сегодня:",
+                    schedule = "Отдохните хорошенько!" if len(sch) == 0 else "\n\n".join(sch),
+                    end = "Желаю продуктивного дня."
+                    )
+                await bot.send_message(vip_user, message, reply_markup=keyboard.IDLE_KEYBOARD)
+                
 
 async def add_user_critical(user_id):
     manager.add_user(user_id)
@@ -271,6 +298,14 @@ async def process_schedule(callback: types.CallbackQuery):
             else:
                 await bot.send_message(user_id, "Вы ещё не указали свою группу!")
 
+async def morning_scheduler():
+    aioschedule.every().day.at("8:00").do(morning_greeting)
+    while True:
+        await aioschedule.run_pending()
+        await asyncio.sleep(10)
+
+async def setup():
+    asyncio.create_task(morning_scheduler())
 
 if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp, skip_updates=True, on_startup=setup)
