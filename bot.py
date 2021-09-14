@@ -3,6 +3,7 @@ from aiogram.utils.emoji import emojize
 import logging
 import aioschedule
 import asyncio
+import textwrap
 
 from manager import Manager
 from schedule import Schedule
@@ -90,11 +91,12 @@ schedule = Schedule()
 keyboard = Keyboard()
 
 async def morning_greeting():
-    message_template = """Доброе утро! Сегодня {weekday}, {date}.
+    message_template = textwrap.dedent("""\
+    Доброе утро! Сегодня {weekday}, {date}.
     {header}
     {schedule}
     {end}
-    """
+    """)
     user_info: ActiveUser
     for vip_user in VIP:
         data = manager.get_user(vip_user)
@@ -103,11 +105,11 @@ async def morning_greeting():
             if user_group is not None:
                 sch = schedule.today(user_group.group)
                 message = message_template.format(
-                    weekday = Times.today_weekday,
-                    date = Times.today_date,
+                    weekday = Times.today_weekday(),
+                    date = Times.today_date(),
                     header = "Сегодня у вас нет пар" if len(sch) == 0 else "Ваше расписание на сегодня:",
                     schedule = "Отдохните хорошенько!" if len(sch) == 0 else "\n\n".join(sch),
-                    end = "Желаю продуктивного дня."
+                    end = "Хорошего дня!"
                     )
                 await bot.send_message(vip_user, message, reply_markup=keyboard.IDLE_KEYBOARD)
                 
@@ -304,7 +306,7 @@ async def morning_scheduler():
         await aioschedule.run_pending()
         await asyncio.sleep(10)
 
-async def setup():
+async def setup(_):
     asyncio.create_task(morning_scheduler())
 
 if __name__ == "__main__":
