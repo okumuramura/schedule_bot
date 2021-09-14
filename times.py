@@ -11,6 +11,21 @@ class Times:
         "Воскресенье"
     ]
 
+    months = [
+        {"nominative": "Январь", "genitive": "Января"},
+        {"nominative": "Февраль", "genitive": "Февраля"},
+        {"nominative": "Март", "genitive": "Марта"},
+        {"nominative": "Апрель", "genitive": "Апреля"},
+        {"nominative": "Май", "genitive": "Мая"},
+        {"nominative": "Июнь", "genitive": "Июня"},
+        {"nominative": "Июль", "genitive": "Июля"},
+        {"nominative": "Август", "genitive": "Августа"},
+        {"nominative": "Сентябрь", "genitive": "Сентября"},
+        {"nominative": "Октябрь", "genitive": "Октября"},
+        {"nominative": "Ноябрь", "genitive": "Ноября"},
+        {"nominative": "Декабрь", "genitive": "Декабря"},
+    ]
+
     lesson_begins = [
         datetime.time(8, 30, 0),
         datetime.time(10, 10, 0),
@@ -42,5 +57,19 @@ class Times:
     def today_weekday() -> str:
         return Times.weekdays[datetime.datetime.today().weekday()]
 
+    @staticmethod
     def tomorrow_weekday() -> str:
         return Times.weekdays[(datetime.datetime.today().weekday() + 1) % 7]
+
+    @staticmethod
+    def today_month(case = "nominative") -> str:
+        allowed_cases = ["nominative", "genitive"]
+        if case in allowed_cases:
+            return Times.months[(datetime.datetime.today().month - 1)]
+        else:
+            assert KeyError(f"Wrong case!, allowed: {', '.join(allowed_cases)}.")
+
+    @staticmethod
+    def today_date() -> str:
+        return f"{datetime.datetime.today().day} {Times.today_month('genitive')}"
+
