@@ -29,6 +29,17 @@ class Manager:
         )
         return data
 
+    def get_author_schedule(self, author, weekday, is_overline):
+        if type(author) == str:
+            author = self.session.query(db.Author).filter(db.Author.name == author).first()
+        data = (
+            self.session.query(db.Schedule).
+            filter((db.Schedule.author == author) & (db.Schedule.weekday == weekday) & (db.Schedule.on_line == is_overline)).
+            order_by(db.Schedule.num).all()
+        )
+        return data
+
+
     def get_lesson_by_num(self, group, weekday, on_line, num, next = False):
         if type(group) == str:
             group = self.session.query(db.Group).filter(db.Group.group == group).first()
