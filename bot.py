@@ -16,7 +16,11 @@ KEY: str = info.KEY # bot token
 
 ADMINS: list = info.ADMINS # list of telegram ids here
 
-VIP: list = []
+DB_USER: str = info.DB_USER
+
+DB_PASS: str = info.DB_PASS
+
+VIP: list = info.VIP
 
 logging.basicConfig(level = logging.DEBUG)
 
@@ -85,7 +89,8 @@ class Keyboard:
 
 bot = Bot(token=KEY)
 dp = Dispatcher(bot)
-manager = Manager("sqlite:///lessons.db")
+db = f"{DB_USER}:{DB_PASS}@localhost:3306/schedule?charset=utf8mb4"
+manager = Manager(db)
 schedule = Schedule()
 
 keyboard = Keyboard()

@@ -3,6 +3,8 @@ from PySide2 import QtWidgets, QtGui, QtCore
 
 from manager import Manager
 
+import argparse
+
 class LessonHeader(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -179,9 +181,9 @@ class MainWindow(QtWidgets.QWidget):
         "Суббота" : 5
     }
 
-    def __init__(self):
+    def __init__(self, db):
         super().__init__()
-        self.manager = Manager("sqlite:///lessons.db")
+        self.manager = Manager()
         self.prepare_data()
         self.prepare_table()
 
@@ -317,9 +319,17 @@ class MainWindow(QtWidgets.QWidget):
         self.manager.delete_schedule(gid, weekday, is_overline, id)
 
 
-app = QtWidgets.QApplication([])
+if __name__ == "__main__":
+    DEFAULT_DB = "sqlite://lessons.db"
+    argument_parser = argparse.ArgumentParser()
+    argument_parser.add_argument("-b", "--db", action="store", dest="db", type=str, default=DEFAULT_DB, help="database url (%s by default)" % DEFAULT_DB)
 
-window = MainWindow()
-window.show()
+    args = argument_parser.parse_args()
+    db = args.db
 
-sys.exit(app.exec_())
+    app = QtWidgets.QApplication([])
+
+    window = MainWindow(db)
+    window.show()
+
+    sys.exit(app.exec_())

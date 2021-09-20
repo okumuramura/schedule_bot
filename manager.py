@@ -1,20 +1,20 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 import db
 
 class Manager:
     def __init__(self, db: str):
         self.engine = create_engine(db)
-        self.session = Session(bind = self.engine)
+        self.session: Session = sessionmaker(self.engine)()
 
     def get_groups(self):
         return self.session.query(db.Group).all()
 
-    def get_lessons(self):
+    def get_lessons(self) -> list:
         return self.session.query(db.Lesson).all()
 
-    def get_authors(self):
+    def get_authors(self) -> list:
         return self.session.query(db.Author).all()
 
     def get_schedule(self, group, weekday, on_line):
@@ -39,27 +39,7 @@ class Manager:
         )
         return data
 
-
-    def get_lesson_by_num(self, group, weekday, on_line, num, next = False):
-        if type(group) == str:
-            group = self.session.query(db.Group).filter(db.Group.group == group).first()
-        lesson = self.session.query(db.Schedule).filter(
-            (db.Schedule.group == group) &
-            (db.Schedule.weekday == weekday) &
-            (db.Schedule.on_line == on_line) &
-            (db.Schedule.num == num)
-        ).first()
-        if next:
-            next_lesson = self.session.query(db.Schedule).filter(
-                (db.Schedule.group == group) &
-                (db.Schedule.weekday == weekday) &
-                (db.Schedule.on_line == on_line) &
-                (db.Schedule.num > num)
-            ).first()
-            return lesson, next_lesson
-        return lesson
-
-    def get_data(self):
+    def get_data(self) -> dict:
         data = {}
         data["lessons"] = self.session.query(db.Lesson).all()
         data["authors"] = self.session.query(db.Author).all()
@@ -67,19 +47,17 @@ class Manager:
         data["groups"] = self.session.query(db.Group).all()
         return data
 
-    def get_user(self, tid):
-        return (self.session.query(db.ActiveUser, db.Group).
-            filter(db.ActiveUser.tid == tid).
-            outerjoin(db.Group, db.Group.id == db.ActiveUser.group_id).first())
-
-    def get_all_users(self):
-        return self.session.query(db.ActiveUser).all()
-
     def add_group(self, group) -> int:
         group = db.Group(group)
         self.session.add(group)
         self.session.commit()
         return group.id
+
+    def group_exists(self, name) -> bool:
+        return self.session.query(db.Group.group).filter(db.Group.group == name).first() is not None
+
+    def group_id(self, group):
+        return self.session.query(db.Group.id).filter(db.Group.group == group).first()
 
     def add_lesson(self, name) -> int:
         lesson = db.Lesson(name)
@@ -121,7 +99,6 @@ class Manager:
                 (db.Schedule.weekday == weekday) & 
                 (db.Schedule.on_line == is_overline) & 
                 (db.Schedule.num == num))).first()
-
         if schedule is None:
             schedule = db.Schedule(group, lesson, author, lesson_type, num, weekday, is_overline, classroom, corps)
             self.session.add(schedule)
@@ -142,11 +119,13 @@ class Manager:
                                                 (db.Schedule.num == num)).delete(synchronize_session=False)
         self.session.commit()
 
+    def get_user(self, tid):
+        return (self.session.query(db.ActiveUser, db.Group).
+            filter(db.ActiveUser.tid == tid).
+            outerjoin(db.Group, db.Group.id == db.ActiveUser.group_id).first())
+
     def get_user_state(self, uid):
         return self.session.query(db.ActiveUser.state).filter(db.ActiveUser.tid == uid).first()[0]
-
-    def group_exists(self, name):
-        return self.session.query(db.Group.group).filter(db.Group.group == name).first() is not None
 
     def set_state(self, uid, state):
         self.session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update({"state": state})
@@ -183,7 +162,7 @@ if __name__ == "__main__":
         order_by(db.Schedule.weekday, db.Schedule.num).all()
         
     )
-    
+    print(*data, sep="\n")
     sch = {}
     for group, schedule, lesson, author, lesson_type in data:
         a = sch.get(group.group, None)
