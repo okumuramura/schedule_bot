@@ -6,7 +6,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy import select
 
-from times import Times
+import argparse
+
+import info
 
 
 metadata = MetaData()
@@ -23,18 +25,19 @@ class Weekday:
 
 groups = Table("groups", metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("group", String, nullable=False)
+    Column("group", String(20), nullable=False)
 )
 
 lessons = Table("lessons", metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("name", String),
+    Column("name", String(200)),
     Column("type", String(50)),
 )
 
 authors = Table("authors", metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("name", String(50)),
+    Column("name", String(100)),
+    Column("department", String(5))
 )
 
 schedule = Table("schedule", metadata,
@@ -66,7 +69,7 @@ class Group(Base):
     __tablename__ = "groups"
 
     id = Column(Integer, primary_key=True)
-    group = Column(String, nullable=False)
+    group = Column(String(20), nullable=False)
     schedules = relationship("Schedule", order_by=schedule.c.id, back_populates="group")
 
     def __init__(self, group : str):
@@ -85,15 +88,17 @@ class Author(Base):
     __tablename__ = "authors"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(50))
+    name = Column(String(100))
+    department = Column(String(5))
 
     schedules = relationship("Schedule", order_by=schedule.c.id, back_populates="author")
 
-    def __init__(self, name):
+    def __init__(self, name, department = ""):
         self.name = name
+        self.department = department
 
     def __repr__(self):
-        return f"<{self.name}>"
+        return f"<{self.name} ({self.department})>"
 
     def __eq__(self, other):
         if type(other) == str:
@@ -108,7 +113,7 @@ class Lesson(Base):
     __tablename__ = "lessons"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String(150))
 
     schedules = relationship("Schedule", back_populates="lesson")
 
@@ -203,13 +208,7 @@ class Schedule(Base):
         ltype = f"({self.lesson_type.type}) " if self.lesson_type else ""
         author = f"{self.author.name} " if self.author else ""
         classroom = self.classroom if self.classroom else ""
-        lesson_time = Times.lesson_time(self.num)
-        return f"{self.num}. {lesson_time[0]} - {lesson_time[1]}\n{self.lesson.name} {author}{ltype}{classroom}"
-
-    def just_name(self) -> str:
-        ltype = f"({self.lesson_type.type})" if self.lesson_type else ""
-        classroom = self.classroom if self.classroom else ""
-        return f"{self.lesson.name} {ltype} {classroom}"
+        return f"{self.num}. {self.lesson.name} {author}{ltype}{classroom}"
 
     def try_get_corps(self, classroom):
         return None
@@ -236,65 +235,39 @@ class ActiveUser(Base):
 
 
 
-# engine = create_engine("sqlite:///lessons.db")
-# metadata.create_all(engine)
-
-
 if __name__ == "__main__":
-    import json
-    import os
+    DEFAULT_DB = "sqlite://lessons.db"
+    
+    argument_parser = argparse.ArgumentParser()
+    argument_parser.add_argument("-i", "--init", 
+        action="store_true", 
+        dest="init", 
+        help = "init database (create tables)"
+    )
+    argument_parser.add_argument("-b", "--db", 
+        action="store", 
+        dest="db", 
+        type = str, 
+        default=DEFAULT_DB, 
+        help = "database URL (%s by default)" % DEFAULT_DB
+    )
 
-    # if os.path.exists("lessons.db"):
-    #     os.remove("lessons.db")
+    args = argument_parser.parse_args()
+    db_url = args.db
+    init = args.init
 
-    engine = create_engine("sqlite:///lessons.db")
-    metadata.create_all(engine)
+    if init:
+        print("connecting to %s" % db_url)
+        engine = create_engine(db_url, echo = True, encoding="utf-8")
+        metadata.create_all(engine)
 
-    exit()
+        lesson_types_str = [
+            "лек", "практ", "лаб", "лек+практ", "практ+лаб", "лек+лаб", "практ+лек", "лаб+практ", "лаб+лек"
+        ]
 
-    with open("data.json", "r", encoding="utf-8") as file:
-        data = json.load(file)
-        _group_list = [Group(x) for x in data["groups"]]
-        _lesson_list = [Lesson(x) for x in data["lessons"]]
-        _lesson_types = [LessonType(x) for x in data["lesson_types"]]
-        _author_list = [Author(x) for x in data["authors"]]
+        lesson_types = [LessonType(l) for l in lesson_types_str]
 
-    _schedule = [
-        Schedule(_group_list[0], _lesson_list[0], _author_list[0], 1, 1, Weekday.MONDAY, True, "3-240"),
-        Schedule(_group_list[0], _lesson_list[1], _author_list[1], 2, 3, Weekday.MONDAY, True, "1-2")
-    ]
-
-    _users = [
-        ActiveUser(12, 1),
-        ActiveUser(231),
-        ActiveUser(289518247, 1)
-    ]
-
-    session = Session(bind = engine)
-    session.add_all(_group_list)
-    session.add_all(_lesson_list)
-    session.add_all(_lesson_types)
-    session.add_all(_author_list)
-
-    session.add_all(_schedule)
-    session.add_all(_users)
-
-    session.commit()
-
-    labels = {
-        "Groups": Group,
-        "Lessons": Lesson,
-        "Types": LessonType,
-        "Authors": Author
-    }
-
-    print(session.query(ActiveUser).all())
-
-    for label, cls in labels.items():
-        print(label)
-        for i in session.query(cls).all():
-            print("  ", i)
-        print()
-
-
-
+        session = Session(bind = engine)
+        session.add_all(lesson_types)
+        session.commit()
+        print("Database initialized!")

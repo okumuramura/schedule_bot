@@ -153,13 +153,6 @@ class Schedule:
         return (datetime.datetime.min + (d1 - d2)).time()
 
         
-                
-
-if __name__ == "__main__":
-    schedule = Schedule()
-    #print(schedule.now("Б19-191-2"))
-    # for i, (b, e) in enumerate(zip(schedule.lesson_begins, schedule.lesson_ends)):
-    #     print(f"{i}. {b}-{e}")
-    #print(schedule.tomorrow("Б19-191-2"))
+            
     
 
