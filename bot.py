@@ -91,7 +91,7 @@ bot = Bot(token=KEY)
 dp = Dispatcher(bot)
 db = f"mysql://{DB_USER}:{DB_PASS}@localhost:3306/schedule?charset=utf8mb4"
 manager = Manager(db)
-schedule = Schedule()
+schedule = Schedule(manager)
 
 keyboard = Keyboard()
 

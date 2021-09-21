@@ -59,9 +59,11 @@ class Updater:
                 a_id = None
 
             if lesson.lesson_type is not None:
-                t_id = self.manager.session.query(db.LessonType.id).filter(db.LessonType.type == lesson.lesson_type).first()[0]
+                t_id = self.manager.session.query(db.LessonType.id).filter(db.LessonType.type == lesson.lesson_type).first()
                 if t_id is None:
                     print("No lesson type in db: " + lesson.lesson_type)
+                else:
+                    t_id = t_id[0]
             else:
                 t_id = None
 

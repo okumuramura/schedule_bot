@@ -65,8 +65,8 @@ class NowAndNext:
 
 class Schedule:
 
-    def __init__(self):
-        self.manager = Manager("sqlite:///lessons.db")
+    def __init__(self, manager):
+        self.manager = manager
         self._time_schedule = ""
         for i, (b, e) in enumerate(zip(Times.lesson_begins, Times.lesson_ends)):
             self._time_schedule += f"{i+1}. {b.strftime('%H:%M')} - {e.strftime('%H:%M')}\n"
