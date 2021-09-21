@@ -183,7 +183,7 @@ class MainWindow(QtWidgets.QWidget):
 
     def __init__(self, db):
         super().__init__()
-        self.manager = Manager()
+        self.manager = Manager(db)
         self.prepare_data()
         self.prepare_table()
 

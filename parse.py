@@ -199,6 +199,9 @@ def parse_sheet(sheet: np.ndarray):
     global UNNAMED
     global PROGRESS
 
+    global LESSONS_SET
+    global AUTHORS_SET
+
     lessons = {}
     COLS, ROWS = sheet.shape
     GROUP_REGEX = re.compile(r"[А-Я]\d\d-\d\d\d-\d")
@@ -217,6 +220,11 @@ def parse_sheet(sheet: np.ndarray):
                             l = parse_lesson_exp(sheet[x][y+d])
 
                             if l is not None:
+                                if l.name is not None:
+                                    LESSONS_SET.add(l.name)
+                                if l.author is not None:
+                                    AUTHORS_SET.add(l.author)
+                                
                                 if SHOW == "ALL":
                                     if PROGRESS:
                                         tqdm.write(l.__str__())
@@ -255,13 +263,16 @@ TOTAL = 0
 SHOW = "ALL"
 PROGRESS = True
 
+LESSONS_SET = set()
+AUTHORS_SET = set()
+
 try:
     from tqdm import tqdm
 except ImportError:
     PROGRESS = False
 
 if __name__ == "__main__":
-    DEFAULT_DB = "mysql://schedule:SchF0rever@localhost:3306/schedule?charset=utf8mb4"
+    DEFAULT_DB = "sqlite://lessons.db"
 
     argument_parser = argparse.ArgumentParser()
     argument_parser.add_argument("-d", "--dir", dest="dir", action="store", type=str, default="./", help="directory with files")
@@ -316,8 +327,19 @@ if __name__ == "__main__":
     if is_updating.lower() == "y":
         upd = Updater(db_url)
         upd.clear_schedule()
+        print("Adding lessons list: ", end = "")
+        upd.add_lessons(LESSONS_SET)
+        print("OK")
+        print("Adding authors list: ", end = "")
+        upd.add_authors(AUTHORS_SET)
+        print("OK")
 
-        for group, sch in lessons.items():
+        if PROGRESS:
+            lessons_list = tqdm(lessons.items())
+        else:
+            lessons_list = lessons.items()
+
+        for group, sch in lessons_list:
             upd.add_group(group, sch)
     else:
         print("Abort")

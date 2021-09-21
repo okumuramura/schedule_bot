@@ -47,10 +47,11 @@ class Manager:
         data["groups"] = self.session.query(db.Group).all()
         return data
 
-    def add_group(self, group) -> int:
+    def add_group(self, group, commit = True) -> int:
         group = db.Group(group)
         self.session.add(group)
-        self.session.commit()
+        if commit:
+            self.session.commit()
         return group.id
 
     def group_exists(self, name) -> bool:
@@ -59,41 +60,46 @@ class Manager:
     def group_id(self, group):
         return self.session.query(db.Group.id).filter(db.Group.group == group).first()
 
-    def add_lesson(self, name) -> int:
+    def add_lesson(self, name, commit = True) -> int:
         lesson = db.Lesson(name)
         self.session.add(lesson)
-        self.session.commit()
+        if commit:
+            self.session.commit()
         return lesson.id
 
-    def add_lessons(self, names : list):
+    def add_lessons(self, names : list, commit = True):
         lessons = [db.Lesson(name) for name in names]
         self.session.add(lessons)
-        self.session.commit()
+        if commit:
+            self.session.commit()
         return [lesson.id for lesson in lessons]
 
-    def add_author(self, name) -> int:
+    def add_author(self, name , commit = True) -> int:
         author = db.Author(name)
         self.session.add(author)
-        self.session.commit()
+        if commit:
+            self.session.commit()
         return author.id
 
-    def add_authors(self, names):
+    def add_authors(self, names, commit = True):
         authors = [db.Author(name) for name in names]
         self.session.add_all(authors)
-        self.session.commit()
+        if commit:
+            self.session.commit()
         return [author.id for author in authors]
 
     def add_schedule(self, group, lesson, author, 
                         lesson_type, num, weekday, is_overline, 
-                        classroom, corps = None) -> int:
+                        classroom, corps = None, commit = True) -> int:
         schedule = db.Schedule(group, lesson, author, lesson_type, num, weekday, is_overline, classroom, corps)
         self.session.add(schedule)
-        self.session.commit()
+        if commit:
+            self.session.commit()
         return schedule.id
 
     def add_or_upd_schedule(self, group, lesson, author, 
                         lesson_type, num, weekday, is_overline, 
-                        classroom, corps = None) -> int:
+                        classroom, corps = None, commit = True) -> int:
         schedule = (self.session.query(db.Schedule).
             filter((db.Schedule.group_id == group) & 
                 (db.Schedule.weekday == weekday) & 
@@ -109,15 +115,17 @@ class Manager:
             schedule.classroom = classroom
             schedule.corps = corps
 
-        self.session.commit()
+        if commit:
+            self.session.commit()
         return schedule.id
 
-    def delete_schedule(self, group, weekday, is_overline, num):
+    def delete_schedule(self, group, weekday, is_overline, num, commit = True):
         self.session.query(db.Schedule).filter((db.Schedule.group_id == group) & 
                                                 (db.Schedule.weekday == weekday) &
                                                 (db.Schedule.on_line == is_overline) &
                                                 (db.Schedule.num == num)).delete(synchronize_session=False)
-        self.session.commit()
+        if commit:
+            self.session.commit()
 
     def get_user(self, tid):
         return (self.session.query(db.ActiveUser, db.Group).
@@ -127,24 +135,28 @@ class Manager:
     def get_user_state(self, uid):
         return self.session.query(db.ActiveUser.state).filter(db.ActiveUser.tid == uid).first()[0]
 
-    def set_state(self, uid, state):
+    def set_state(self, uid, state, commit = True):
         self.session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update({"state": state})
-        self.session.commit()
+        if commit:
+            self.session.commit()
 
-    def login_user(self, uid, group, state = 1):
+    def login_user(self, uid, group, state = 1, commit = True):
         group = self.session.query(db.Group).filter(db.Group.group == group).first()
         self.session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update({"group_id": group.id, "state": state})
-        self.session.commit()
+        if commit:
+            self.session.commit()
 
-    def logout_user(self, uid):
+    def logout_user(self, uid, commit = True):
         self.session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update({"group_id": None, "state": 0})
-        self.session.commit()
+        if commit:
+            self.session.commit()
 
 
-    def add_user(self, uid):
+    def add_user(self, uid, commit = True):
         user = db.ActiveUser(uid)
         self.session.add(user)
-        self.session.commit()
+        if commit:
+            self.session.commit()
 
     def user_exists(self, uid):
         return self.session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).first() is not None
