@@ -266,7 +266,7 @@ async def inline_group_list(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     await bot.answer_callback_query(callback.id)
     groups = manager.get_groups()
-    await bot.send_message(user_id, "Список групп:\n" + "\n".join(groups))
+    await bot.send_message(user_id, "Список групп:\n" + "\n".join([str(g) for g in groups]))
 
 
 
