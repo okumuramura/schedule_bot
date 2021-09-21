@@ -80,6 +80,9 @@ class Group(Base):
     def __repr__(self):
         return f"<Group {self.group}>"
 
+    def __str__(self):
+        return self.group
+
     def __eq__(self, other):
         if type(other) == str:
             return self.group == other

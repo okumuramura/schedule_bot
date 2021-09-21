@@ -33,6 +33,7 @@ class Keyboard:
         self.IDLE_KEYBOARD = types.ReplyKeyboardMarkup(resize_keyboard=True)
         self.SCHEDULE_KEYBOARD = types.InlineKeyboardMarkup(row_width=2)
         self.BACK_KEYBOARD = types.InlineKeyboardMarkup(row_width=1)
+        self.GROUP_KEYBOARD = types.InlineKeyboardMarkup(row_width=1)
 
         self.IDLE_KEYBOARD.row(
             types.KeyboardButton(text="Сегодня"),
@@ -83,6 +84,10 @@ class Keyboard:
 
         self.BACK_KEYBOARD.add(
             types.InlineKeyboardButton("Назад", callback_data="back")
+        )
+
+        self.GROUP_KEYBOARD.add(
+            types.InlineKeyboardButton("Список групп", callback_data="grouplist")
         )
 
 
@@ -138,7 +143,7 @@ async def start_handler(msg: types.Message):
     else:
         if data is None:
             manager.add_user(user_id)
-        await bot.send_message(msg.from_user.id, f"Добро пожаловать!\nВведите номер вашей группы")
+        await bot.send_message(msg.from_user.id, f"Добро пожаловать!\nВведите номер вашей группы", reply_markup=keyboard.GROUP_KEYBOARD)
 
 @dp.message_handler(lambda msg: msg.text.lower() == "сегодня")
 async def today_handler(msg: types.Message):
@@ -157,7 +162,7 @@ async def today_handler(msg: types.Message):
             else:
                 await bot.send_message(user_id, message_top + "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
         else:
-            await bot.send_message(user_id, "Вы ещё не указали свою группу!")
+            await bot.send_message(user_id, "Вы ещё не указали свою группу!", reply_markup=keyboard.GROUP_KEYBOARD)
 
 @dp.message_handler(lambda msg: msg.text.lower() == "завтра")
 async def tomorrow_handler(msg: types.Message):
@@ -184,7 +189,7 @@ async def tomorrow_handler(msg: types.Message):
                     reply_markup=keyboard.IDLE_KEYBOARD
                     )
         else:
-            await bot.send_message(user_id, "Вы ещё не указали свою группу!")
+            await bot.send_message(user_id, "Вы ещё не указали свою группу!", reply_markup=keyboard.GROUP_KEYBOARD)
 
 @dp.message_handler(lambda msg: msg.text.lower() == "сейчас")
 async def now_handler(msg: types.Message):
@@ -199,7 +204,7 @@ async def now_handler(msg: types.Message):
             now = schedule.now(user_group.group)
             await bot.send_message(user_id, now, reply_markup=keyboard.IDLE_KEYBOARD)
         else:
-            await bot.send_message(user_id, "Вы ещё не указали свою группу!")
+            await bot.send_message(user_id, "Вы ещё не указали свою группу!", reply_markup=keyboard.GROUP_KEYBOARD)
 
 
 @dp.message_handler(lambda msg: msg.text.lower() == "расписание")
@@ -244,7 +249,7 @@ async def message_handler(msg: types.Message):
             manager.login_user(user_id, group, BotState.IDLE)
             await bot.send_message(user_id, f"Ок!\nТеперь ваша группа: {group}", reply_markup=keyboard.IDLE_KEYBOARD)
         else:
-            await bot.send_message(user_id, "Не получается найти группу с таким именем :(")
+            await bot.send_message(user_id, "Не получается найти группу с таким именем :(", reply_markup=keyboard.GROUP_KEYBOARD)
 
 @dp.callback_query_handler(lambda c: c.data == "back")
 async def inline_back(callback: types.CallbackQuery):
@@ -256,6 +261,13 @@ async def inline_back(callback: types.CallbackQuery):
         reply_markup=keyboard.SCHEDULE_KEYBOARD
         )
     
+@dp.callback_query_handler(lambda c: c.data == "grouplist")
+async def inline_group_list(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    await bot.answer_callback_query(callback.id)
+    groups = manager.get_groups()
+    await bot.send_message(user_id, "Список групп:\n" + "\n".join(groups))
+
 
 
 @dp.callback_query_handler()
