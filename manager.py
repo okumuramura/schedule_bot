@@ -29,6 +29,25 @@ class Manager:
         )
         return data
 
+    def get_lesson_by_num(self, group, weekday, on_line, num, next = False):
+        if type(group) == str:
+            group = self.session.query(db.Group).filter(db.Group.group == group).first()
+        lesson = self.session.query(db.Schedule).filter(
+            (db.Schedule.group == group) &
+            (db.Schedule.weekday == weekday) &
+            (db.Schedule.on_line == on_line) &
+            (db.Schedule.num == num)
+        ).first()
+        if next:
+            next_lesson = self.session.query(db.Schedule).filter(
+                (db.Schedule.group == group) &
+                (db.Schedule.weekday == weekday) &
+                (db.Schedule.on_line == on_line) &
+                (db.Schedule.num > num)
+            ).first()
+            return lesson, next_lesson
+        return lesson
+
     def get_author_schedule(self, author, weekday, is_overline):
         if type(author) == str:
             author = self.session.query(db.Author).filter(db.Author.name == author).first()
@@ -46,6 +65,9 @@ class Manager:
         data["types"] = self.session.query(db.LessonType).all()
         data["groups"] = self.session.query(db.Group).all()
         return data
+
+    def get_all_users(self):
+        return self.session.query(db.ActiveUser).all()
 
     def add_group(self, group, commit = True) -> int:
         group = db.Group(group)
