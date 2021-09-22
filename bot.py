@@ -9,6 +9,7 @@ from manager import Manager
 from schedule import Schedule
 from db import ActiveUser
 from times import Times
+import weather
 
 import info # personal information
 
@@ -102,13 +103,15 @@ keyboard = Keyboard()
 
 async def morning_greeting():
     message_template = textwrap.dedent("""\
-    Доброе утро! Сегодня {weekday}, {date}.
-
+    Доброе утро! Сегодня {date}, {weekday}.
+    {weather}
     {header}
     {schedule}
     
     {end}
     """)
+    today_weather = await weather.get_weather(location=296181)
+
     user_info: ActiveUser
     for vip_user in VIP:
         data = manager.get_user(vip_user)
@@ -117,13 +120,14 @@ async def morning_greeting():
             if user_group is not None:
                 sch = schedule.today(user_group.group)
                 message = message_template.format(
-                    weekday = Times.today_weekday(),
+                    weekday = Times.today_weekday().lower(),
                     date = Times.today_date(),
                     header = "Сегодня у вас нет пар" if len(sch) == 0 else "Ваше расписание на сегодня:",
+                    weather = today_weather if today_weather is not None else "",
                     schedule = "Отдохните хорошенько!" if len(sch) == 0 else "\n\n".join(sch),
                     end = "Хорошего дня!"
                     )
-                await bot.send_message(vip_user, message, reply_markup=keyboard.IDLE_KEYBOARD)
+                await bot.send_message(vip_user, emojize(message), reply_markup=keyboard.IDLE_KEYBOARD)
                 
 
 async def add_user_critical(user_id):
