@@ -40,7 +40,7 @@ async def get_weather(location = 296181):
     async with aiohttp.ClientSession() as session:
         weather_api_url = "http://dataservice.accuweather.com/forecasts/v1/daily/1day/{location}?apikey={key}&language=ru-ru&details=true&metric=true"
         async with session.get(weather_api_url.format(location = location, key = API_KEY)) as resp:
-            if resp.status() == 200:
+            if resp.status == 200:
                 weather = await resp.json()
                 try:
                     day = weather["DailyForecasts"][0]["Day"]
@@ -61,7 +61,7 @@ async def get_weather(location = 296181):
                 result = ("Погода:\n"\
                     f"{int(temp_max):+}°..{int(temp_min):+}°\n"\
                     f"{icon} {phrase}\n"\
-                    f"Ветер {wind_direction} {int(wind_speed)} {wind_unit}")
+                    f"Ветер {wind_direction} {int(wind_speed)} {wind_unit}\n")
                 return result
             else:
                 return None
