@@ -67,7 +67,7 @@ class Updater:
             else:
                 t_id = None
 
-            self.manager.add_or_upd_schedule(g, l_id, a_id, t_id, number, weekday, is_overline, lesson.auditory, commit=False)
+            self.manager.add_schedule(g, l_id, a_id, t_id, number, weekday, is_overline, lesson.auditory, commit=False)
         
         self.manager.session.commit()
 

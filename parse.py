@@ -109,7 +109,7 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
     #author_name = re.compile(r"[А-Я][а-я]+\s([А-Я](([а-я]+)|\.)\s?)+[А-Я]([а-я]+)?\.?")
     authorname_re = re.compile(r"(((пр\.)|(доц\.)|(проф\.))\s*)?(?P<ath>([А-ЯЁ][А-Яа-яё]+(\s|\.)+(\s|\.)?[А-ЯЁ](\s|\.)+(\s|\.)?[А-ЯЁ]\.?)|(([А-ЯЁ][а-яё]+\s?){3,}))")
     department_re = re.compile(r"^\s*\(?(?P<dep>\d+\w?)\)?")
-    classroom_re = re.compile(r"((БИ|(\d(к.)?))\w?\s?-(ОД-)?\s?\d+\w?\d?)|(ЭОиДОТ)|(ООО\s?[«\"][\w-]+[»\"])|(ижводоканал)|(ИжНТ)", re.IGNORECASE)
+    classroom_re = re.compile(r"((БИ|(\d(к.)?))\w?\s?-(ОД-)?\s?\d+\w?\d?((/\d[^\-/]*)|(\-[\d\w]+))?)|(ЭОиДОТ)|(ООО\s?[«\"][\w-]+[»\"])|(ижводоканал)|(ИжНТ)", re.IGNORECASE)
     lesson_type_re = re.compile(r"[\(\s](?P<type>((леке?ц?и?я?\.*)?\s?\+?\s?(практ?и?к?а?\.*)?\s?\+?\s?((л[/\.]\s?р?\.*)|(лаб\.*))?\s?\+?\s?(практ?и?к?а?\.*)?\s?\+?\s?(леке?ц?и?я?\.*)?))(\s\d(,\s?\d)?\sп/гр)?[\)\s]", re.IGNORECASE)
     lesson_re = re.compile(r"\s*((\(?[\w\s/+\.,-]+\)\s*)|(\([\w\s/+\.,-]+\)?\s*))*(?P<name>[\w\sё\.,-]{3,})(\s*(\([\w\s/+\.,-]+\)\s*))*(,\s*)?")
     lesson_re_no_author = re.compile(r"\s*(\(?[\w\s/+\.,-]+\)\s*)*(?P<name>[\w\sё\.-]{3,})(\s*(\([\w\s/+\.,-]+\)\s*))*(,\s*)?")
@@ -227,7 +227,8 @@ def parse_sheet(sheet: np.ndarray):
                                 
                                 if SHOW == "ALL":
                                     if PROGRESS:
-                                        tqdm.write(l.__str__())
+                                        if l.auditory == "2-134/2":
+                                            tqdm.write(l.__str__())
                                     else:
                                         print(l)
                                 if not l.is_full():
