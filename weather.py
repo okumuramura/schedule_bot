@@ -2,6 +2,8 @@ import asyncio
 import aiohttp
 import info
 
+import logging
+
 API_KEY = info.WEATHER_KEY
 
 ICONS = {
@@ -54,7 +56,8 @@ async def get_weather(location = 296181):
                     wind_speed = wind["Speed"]["Value"]
                     wind_unit = wind["Speed"]["Unit"]
                     wind_direction = wind["Direction"]["Localized"]
-                except KeyError:
+                except KeyError as err:
+                    logging.error(err)
                     return None
 
 
@@ -64,7 +67,9 @@ async def get_weather(location = 296181):
                     f"Ветер {wind_direction} {int(wind_speed)} {wind_unit}\n")
                 return result
             else:
+                logging.warning("weather page status code: " + str(resp.status))
                 return None
 
-
-    
+if __name__ == "__main__":
+    result = asyncio.run(get_weather())
+    print(result)
