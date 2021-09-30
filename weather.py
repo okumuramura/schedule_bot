@@ -56,6 +56,7 @@ async def get_weather(location = 296181):
                     wind_speed = wind["Speed"]["Value"]
                     wind_unit = wind["Speed"]["Unit"]
                     wind_direction = wind["Direction"]["Localized"]
+                    wind_speed_formated = float(wind_speed) * 5 / 18
                 except KeyError as err:
                     logging.error(err)
                     return None
@@ -64,7 +65,7 @@ async def get_weather(location = 296181):
                 result = ("Погода:\n"\
                     f"{int(temp_max):+}°..{int(temp_min):+}°\n"\
                     f"{icon} {phrase}\n"\
-                    f"Ветер {wind_direction} {int(wind_speed)} {wind_unit}\n")
+                    f"Ветер {wind_direction} {wind_speed_formated:.1} м/с\n")
                 return result
             else:
                 logging.warning("weather page status code: " + str(resp.status))
