@@ -4,6 +4,7 @@ import logging
 import aioschedule
 import asyncio
 import textwrap
+import base64
 
 from manager import Manager
 from schedule import Schedule
@@ -142,12 +143,37 @@ async def help_handler(msg: types.Message):
 async def start_handler(msg: types.Message):
     user_id = msg.from_user.id
     data = manager.get_user(user_id)
-    if data is not None and data[1] is not None:
-        await bot.send_message(msg.from_user.id, f"Снова здравствуйте!\nВаша группа: {data[1].group}", reply_markup=keyboard.IDLE_KEYBOARD)
+    args = msg.get_args()
+    if args:
+        group = base64.b64decode(args.encode("utf-8")).decode("utf-8")
+        ok = manager.group_exists(group)
+        if ok:
+            manager.login_user(user_id, group, BotState.IDLE)
+            await bot.send_message(user_id, f"Вы перешли по пригласительной ссылке.\nТеперь ваша группа: {group}", reply_markup=keyboard.IDLE_KEYBOARD)
+        else:
+            await bot.send_message(user_id, "С пригласительной ссылкой что-то не так!\nНо не переживайте, вы можете ввести интересующую вас группу самостоятельно, просто отправте её сообщением", reply_markup=keyboard.GROUP_KEYBOARD)
     else:
-        if data is None:
-            manager.add_user(user_id)
-        await bot.send_message(msg.from_user.id, f"Добро пожаловать!\nВведите номер вашей группы", reply_markup=keyboard.GROUP_KEYBOARD)
+        if data is not None and data[1] is not None:
+            await bot.send_message(msg.from_user.id, f"Снова здравствуйте!\nВаша группа: {data[1].group}", reply_markup=keyboard.IDLE_KEYBOARD)
+        else:
+            if data is None:
+                manager.add_user(user_id)
+            await bot.send_message(msg.from_user.id, f"Добро пожаловать!\nВведите номер вашей группы", reply_markup=keyboard.GROUP_KEYBOARD)
+
+@dp.message_handler(commands=["invite"])
+async def invite_handler(msg: types.Message):
+    user_id = msg.from_user.id
+    user_info: ActiveUser
+    data = manager.get_user(user_id)
+    if data is None:
+        await add_user_critical(user_id)
+    else:
+        user_info, user_group = data
+        if user_info.state == BotState.IDLE and user_group is not None:
+            group: str = user_group.group
+            group_base64 = base64.b64encode(group.encode("utf-8"))
+            invite_link = f"https://t.me/istu_sc_bot?start={group_base64.decode('utf-8')}"
+            await bot.send_message(user_id, invite_link)
 
 @dp.message_handler(lambda msg: msg.text.lower() == "сегодня")
 async def today_handler(msg: types.Message):

@@ -7,7 +7,8 @@ class Updater:
         self.manager = Manager(db)
 
     def clear_schedule(self):
-        self.manager.session.execute(r"TRUNCATE TABLE `schedule`")
+        self.manager.session.query(db.Schedule).delete()
+        # self.manager.session.execute(r"TRUNCATE TABLE `schedule`")
         self.manager.session.commit()
 
     def add_lessons(self, lessons_set):
