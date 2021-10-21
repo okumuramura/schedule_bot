@@ -65,7 +65,7 @@ async def get_weather(location = 296181):
                 result = ("Погода:\n"\
                     f"{int(temp_max):+}°..{int(temp_min):+}°\n"\
                     f"{icon} {phrase}\n"\
-                    f"Ветер {wind_direction} {wind_speed_formated:.1} м/с\n")
+                    f"Ветер {wind_direction} {wind_speed_formated:.1f} м/с\n")
                 return result
             else:
                 logging.warning("weather page status code: " + str(resp.status))

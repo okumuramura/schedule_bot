@@ -175,6 +175,7 @@ async def invite_handler(msg: types.Message):
             invite_link = f"https://t.me/istu_sc_bot?start={group_base64.decode('utf-8')}"
             await bot.send_message(user_id, invite_link)
 
+@dp.message_handler(commands=["today"])
 @dp.message_handler(lambda msg: msg.text.lower() == "сегодня")
 async def today_handler(msg: types.Message):
     user_id = msg.from_user.id
@@ -194,6 +195,7 @@ async def today_handler(msg: types.Message):
         else:
             await bot.send_message(user_id, "Вы ещё не указали свою группу!", reply_markup=keyboard.GROUP_KEYBOARD)
 
+@dp.message_handler(commands=["tomorrow"])
 @dp.message_handler(lambda msg: msg.text.lower() == "завтра")
 async def tomorrow_handler(msg: types.Message):
     user_id = msg.from_user.id
@@ -221,6 +223,7 @@ async def tomorrow_handler(msg: types.Message):
         else:
             await bot.send_message(user_id, "Вы ещё не указали свою группу!", reply_markup=keyboard.GROUP_KEYBOARD)
 
+@dp.message_handler(commands=["now"])
 @dp.message_handler(lambda msg: msg.text.lower() == "сейчас")
 async def now_handler(msg: types.Message):
     user_id = msg.from_user.id
@@ -237,6 +240,7 @@ async def now_handler(msg: types.Message):
             await bot.send_message(user_id, "Вы ещё не указали свою группу!", reply_markup=keyboard.GROUP_KEYBOARD)
 
 
+@dp.message_handler(commands=["schedule"])
 @dp.message_handler(lambda msg: msg.text.lower() == "расписание")
 async def schedule_handler(msg: types.Message):
     user_id = msg.from_user.id
@@ -249,6 +253,7 @@ async def schedule_handler(msg: types.Message):
         if user_info.state == BotState.IDLE and user_group is not None:
             await bot.send_message(user_id, "Какое расписание вам нужно?", reply_markup=keyboard.SCHEDULE_KEYBOARD)
 
+@dp.message_handler(commands=["logout"])
 @dp.message_handler(lambda msg: msg.text.lower() == "выйти")
 async def quit_handler(msg: types.Message):
     user_id = msg.from_user.id
@@ -264,8 +269,6 @@ async def masssend_handler(msg: types.Message):
         for user in all_users:
             await bot.send_message(user.tid, text)
         await bot.send_message(user_id, "ok!", reply_markup=keyboard.IDLE_KEYBOARD)
-            
-    
 
 @dp.message_handler()
 async def message_handler(msg: types.Message):
@@ -296,7 +299,7 @@ async def inline_group_list(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     await bot.answer_callback_query(callback.id)
     groups = manager.get_groups()
-    await bot.send_message(user_id, "Список групп:\n" + "\n".join([str(g) for g in groups]))
+    await bot.send_message(user_id, "Список групп:\n" + "\n".join([str(g) for g in sorted(groups, key=str)]))
 
 
 
