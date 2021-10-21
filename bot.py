@@ -15,13 +15,9 @@ import weather
 import info # personal information
 
 KEY: str = info.KEY # bot token
-
 ADMINS: list = info.ADMINS # list of telegram ids here
-
 DB_USER: str = info.DB_USER
-
 DB_PASS: str = info.DB_PASS
-
 VIP: list = info.VIP
 
 logging.basicConfig(level = logging.DEBUG)
@@ -91,8 +87,6 @@ class Keyboard:
         self.GROUP_KEYBOARD.add(
             types.InlineKeyboardButton("Список групп", callback_data="grouplist")
         )
-
-
 
 bot = Bot(token=KEY)
 dp = Dispatcher(bot)
