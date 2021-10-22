@@ -12,18 +12,24 @@ class Updater:
         self.manager.session.commit()
 
     def add_lessons(self, lessons_set):
+        new_lessons = []
         for l in lessons_set:
             l_id = self.manager.session.query(db.Lesson.id).filter(db.Lesson.name == l).first()
             if l_id is None:
-                l_id = self.manager.add_lesson(l, commit=False)
+                new_lessons.append(l)
         
+        self.manager.session.add_all(new_lessons)
         self.manager.session.commit()
 
     def add_authors(self, authors_set):
+        new_authors = []
         for a in authors_set:
             a_id = self.manager.session.query(db.Author.id).filter(db.Author.name == a).first()
             if a_id is None:
-                a_id = self.manager.add_author(a, commit=False)
+                # a_id = self.manager.add_author(a, commit=False)
+                new_authors.append(a)
+                
+        self.manager.session.add_all(new_authors)
         self.manager.session.commit()
 
 

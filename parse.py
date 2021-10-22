@@ -1,3 +1,5 @@
+from typing import Optional, Dict, List, Set
+
 import xlrd
 import numpy as np
 import re
@@ -11,20 +13,20 @@ import argparse
 
 class Lesson:
     def __init__(self, 
-                name, 
-                author = None, 
-                auditory = None, 
-                lesson_type = None,
-                department = None,
-                raw = None):
-        self.name = name
-        self.author = author
-        self.auditory = auditory
-        self.lesson_type = lesson_type
-        self.department = department
-        self.raw = raw
+                name: str, 
+                author: str = None, 
+                auditory: str = None, 
+                lesson_type: str = None,
+                department: str = None,
+                raw: str = None) -> None:
+        self.name: str = name
+        self.author: str = author
+        self.auditory: str = auditory
+        self.lesson_type: str = lesson_type
+        self.department: str = department
+        self.raw: str = raw
 
-    def is_full(self):
+    def is_full(self) -> bool:
         return self.is_pe() or not (
             self.name is None or
             self.department is None or
@@ -33,7 +35,7 @@ class Lesson:
             self.lesson_type is None
         )
 
-    def is_pe(self):
+    def is_pe(self) -> bool:
         return self.name is not None and self.name == "Физическая культура и спорт"
 
     def __eq__(self, o) -> bool:
@@ -54,7 +56,7 @@ class Lesson:
 
 def parse_lesson_exp(lesson_line: str) -> Lesson:
 
-    def short_name(s: str, start_pos = None) -> str:
+    def short_name(s: str, start_pos: Optional[int] = None) -> str:
         sp = start_pos is not None
         LONG_NAMES = [
             "Аль Аккад Мхд Айман"
@@ -164,7 +166,7 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
 
 
 PREFIX = 0    
-def parse_table(tablename: str) -> dict:
+def parse_table(tablename: str) -> Dict[str, np.ndarray]:
     global PREFIX
     data = xlrd.open_workbook(tablename, formatting_info=True)
     mats = {}
@@ -172,7 +174,7 @@ def parse_table(tablename: str) -> dict:
     for sheet_id in range(data.nsheets):
         sheet = data.sheet_by_index(sheet_id)
 
-        mat = np.empty((sheet.ncols, sheet.nrows), object)
+        mat: np.ndarray = np.empty((sheet.ncols, sheet.nrows), object)
 
         merged_cells = sheet.merged_cells
 
@@ -190,7 +192,7 @@ def parse_table(tablename: str) -> dict:
         PREFIX += 1
     return mats
 
-def parse_sheet(sheet: np.ndarray):
+def parse_sheet(sheet: np.ndarray) -> Dict[str, List[Optional[Lesson]]]:
     global ERRORS
     global PASSED
     global TOTAL
@@ -264,8 +266,8 @@ TOTAL = 0
 SHOW = "ALL"
 PROGRESS = True
 
-LESSONS_SET = set()
-AUTHORS_SET = set()
+LESSONS_SET: Set[str] = set()
+AUTHORS_SET: Set[str] = set()
 
 try:
     from tqdm import tqdm
@@ -285,10 +287,10 @@ if __name__ == "__main__":
 
 
     args = argument_parser.parse_args()
-    SHOW = args.show
-    db_url = args.db
-    filedir = args.dir
-    DEBUG = args.debug
+    SHOW: str = args.show
+    db_url: str = args.db
+    filedir: str = args.dir
+    DEBUG: bool = args.debug
     #sheets = parse_table("./table.xls")
 
     if DEBUG:
@@ -296,8 +298,8 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(level=logging.ERROR)
 
-    lessons = {}
-    FILES = []
+    lessons: Dict[str, List[Optional[Lesson]]] = {}
+    FILES: List[str] = []
 
     for file in os.listdir(filedir):
         ext = file.split(".")[-1]
@@ -324,7 +326,7 @@ if __name__ == "__main__":
     print(f"{colorama.Fore.RED}Unnamed: {UNNAMED}{colorama.Fore.RESET}")
     print(f"{colorama.Fore.RED}Errors: {ERRORS}{colorama.Fore.RESET}")
 
-    is_updating = input("Put data into database (%s)? [y/n]: " % db_url)
+    is_updating: str = input("Put data into database (%s)? [y/n]: " % db_url)
     if is_updating.lower() == "y":
         upd = Updater(db_url)
         upd.clear_schedule()
