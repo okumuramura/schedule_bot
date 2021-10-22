@@ -125,7 +125,7 @@ async def morning_greeting():
                 await bot.send_message(vip_user, emojize(message), reply_markup=keyboard.IDLE_KEYBOARD)
                 
 
-async def add_user_critical(user_id):
+async def add_user_critical(user_id: int):
     manager.add_user(user_id)
     await bot.send_message(user_id, "Простите, похоже что-то случилось с базой данных.\nУкажите пожалуйста свою группу. Для этого просто отправте её номер в сообщении.")
 
@@ -167,7 +167,7 @@ async def invite_handler(msg: types.Message):
             group: str = user_group.group
             group_base64 = base64.b64encode(group.encode("utf-8"))
             invite_link = f"https://t.me/istu_sc_bot?start={group_base64.decode('utf-8')}"
-            await bot.send_message(user_id, invite_link)
+            await bot.send_message(user_id, invite_link, reply_markup=keyboard.IDLE_KEYBOARD)
 
 @dp.message_handler(commands=["today"])
 @dp.message_handler(lambda msg: msg.text.lower() == "сегодня")

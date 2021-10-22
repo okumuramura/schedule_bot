@@ -1,3 +1,5 @@
+from typing import Optional, Union, List, Any
+
 from sqlalchemy import create_engine
 from sqlalchemy import MetaData, ForeignKey
 from sqlalchemy import Table, Column
@@ -70,20 +72,20 @@ active_users = Table("active_users", metadata,
 class Group(Base):
     __tablename__ = "groups"
 
-    id = Column(Integer, primary_key=True)
-    group = Column(String(20), nullable=False)
+    id: int = Column(Integer, primary_key=True)
+    group: str = Column(String(20), nullable=False)
     schedules = relationship("Schedule", order_by=schedule.c.id, back_populates="group")
 
-    def __init__(self, group : str):
+    def __init__(self, group : str) -> None:
         self.group = group
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Group {self.group}>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.group
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if type(other) == str:
             return self.group == other
         else:
@@ -92,20 +94,20 @@ class Group(Base):
 class Author(Base):
     __tablename__ = "authors"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100))
-    department = Column(String(5))
+    id: int = Column(Integer, primary_key=True)
+    name: str = Column(String(100))
+    department: str = Column(String(5))
 
     schedules = relationship("Schedule", order_by=schedule.c.id, back_populates="author")
 
-    def __init__(self, name, department = ""):
+    def __init__(self, name: str, department: str = "") -> None:
         self.name = name
         self.department = department
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.name} ({self.department})>"
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if type(other) == str:
             return self.name == other
         else:
@@ -117,18 +119,18 @@ class Author(Base):
 class Lesson(Base):
     __tablename__ = "lessons"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(150))
+    id: int = Column(Integer, primary_key=True)
+    name: str = Column(String(150))
 
     schedules = relationship("Schedule", back_populates="lesson")
 
-    def __init__(self, name : str):
+    def __init__(self, name : str) -> None:
         self.name = name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Lesson {self.name}>"
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if type(other) == str:
             return self.name == other
         else:
@@ -137,16 +139,16 @@ class Lesson(Base):
 class LessonType(Base):
     __tablename__ = "lesson_types"
 
-    id = Column(Integer, primary_key=True)
-    type = Column(String(30))
+    id: int = Column(Integer, primary_key=True)
+    type: str = Column(String(30))
 
-    def __init__(self, type):
+    def __init__(self, type: str) -> None:
         self.type = type
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Type {self.type}>"
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if type(other) == str:
             return self.type == other
         else:
@@ -155,16 +157,16 @@ class LessonType(Base):
 class Schedule(Base):
     __tablename__ = "schedule"
 
-    id = Column(Integer, primary_key=True)
-    on_line = Column(Boolean)
-    classroom = Column(String(30))
-    corps = Column(Integer, nullable=True)
-    weekday = Column(Integer) # 0..6
-    num = Column(Integer)
-    group_id = Column(Integer, ForeignKey("groups.id"))
-    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
-    author_id = Column(Integer, ForeignKey("authors.id"))
-    lesson_type_id = Column(Integer, ForeignKey("lesson_types.id"))
+    id: int = Column(Integer, primary_key=True)
+    on_line: bool = Column(Boolean)
+    classroom: str = Column(String(30))
+    corps: int = Column(Integer, nullable=True)
+    weekday: int = Column(Integer) # 0..6
+    num: int = Column(Integer)
+    group_id: int = Column(Integer, ForeignKey("groups.id"))
+    lesson_id: int = Column(Integer, ForeignKey("lessons.id"), nullable=False)
+    author_id: int = Column(Integer, ForeignKey("authors.id"))
+    lesson_type_id: int = Column(Integer, ForeignKey("lesson_types.id"))
 
 
     group = relationship("Group", back_populates="schedules")
@@ -173,7 +175,15 @@ class Schedule(Base):
     lesson_type = relationship("LessonType")
 
 
-    def __init__(self, group, lesson, author, lesson_type, num, weekday, on_line, classroom, corps = None):
+    def __init__(self, group: Union[Group, int], 
+                        lesson: Union[Lesson, int], 
+                        author: Union[Author, int], 
+                        lesson_type: Union[LessonType, int], 
+                        num: int, 
+                        weekday: int, 
+                        on_line: bool, 
+                        classroom: str, 
+                        corps: Optional[str] = None) -> None:
         self.classroom = classroom
         if corps is None:
             self.corps = self.try_get_corps(classroom)
@@ -207,7 +217,7 @@ class Schedule(Base):
         self.corps = corps
 
     def __repr__(self):
-        return f"<Schedule {'on line' if self.on_line else 'under line'} {self.corps}-{self.classroom}>"
+        return f"<Schedule {'on line' if self.on_line else 'under line'} {self.classroom}>"
 
     def __str__(self) -> str:
         ltype = f"({self.lesson_type.type}) " if self.lesson_type else ""
@@ -221,27 +231,24 @@ class Schedule(Base):
         classroom = self.classroom if self.classroom else ""
         return f"{self.lesson.name} {ltype} {classroom}"
 
-    def try_get_corps(self, classroom):
-        return None
-
 class ActiveUser(Base):
     __tablename__ = "active_users"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    tid = Column(Integer, unique=True, nullable=False)
-    group_id = Column(Integer, ForeignKey("groups.id"))
-    state = Column(Integer, default=0)
+    id: int = Column(Integer, primary_key=True, autoincrement=True)
+    tid: int = Column(Integer, unique=True, nullable=False)
+    group_id: int = Column(Integer, ForeignKey("groups.id"))
+    state: int = Column(Integer, default=0)
 
     group = relationship("Group")
 
-    def __init__(self, tid, group = None):
+    def __init__(self, tid: int, group: Union[Group, int, None] = None) -> None:
         self.tid = tid
         if type(group) == Group:
             self.group = group
         else:
             self.group_id = group
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<User {self.tid}{(' [' + self.group.group + ']') if self.group is not None else ''} state: {self.state}>"
 
 

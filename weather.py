@@ -1,3 +1,5 @@
+from typing import Optional
+
 import asyncio
 import aiohttp
 import info
@@ -38,7 +40,7 @@ ICONS = {
 }
 
 
-async def get_weather(location = 296181):
+async def get_weather(location: int = 296181) -> Optional[str]:
     async with aiohttp.ClientSession() as session:
         weather_api_url = "http://dataservice.accuweather.com/forecasts/v1/daily/1day/{location}?apikey={key}&language=ru-ru&details=true&metric=true"
         async with session.get(weather_api_url.format(location = location, key = API_KEY)) as resp:
