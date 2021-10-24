@@ -129,6 +129,10 @@ async def add_user_critical(user_id: int):
     manager.add_user(user_id)
     await bot.send_message(user_id, "Простите, похоже что-то случилось с базой данных.\nУкажите пожалуйста свою группу. Для этого просто отправте её номер в сообщении.")
 
+async def not_logged_in_yet(user_id: int):
+    await bot.send_message(user_id, "Вы ещё не указали свою группу!", reply_markup=keyboard.GROUP_KEYBOARD)
+
+
 @dp.message_handler(commands=["help"])
 async def help_handler(msg: types.Message):
     await bot.send_message(msg.from_user.id, "Nothing here yet")
@@ -168,6 +172,9 @@ async def invite_handler(msg: types.Message):
             group_base64 = base64.b64encode(group.encode("utf-8"))
             invite_link = f"https://t.me/istu_sc_bot?start={group_base64.decode('utf-8')}"
             await bot.send_message(user_id, invite_link, reply_markup=keyboard.IDLE_KEYBOARD)
+        else:
+            await not_logged_in_yet(user_id)
+
 
 @dp.message_handler(commands=["today"])
 @dp.message_handler(lambda msg: msg.text.lower() == "сегодня")
@@ -187,7 +194,7 @@ async def today_handler(msg: types.Message):
             else:
                 await bot.send_message(user_id, message_top + "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
         else:
-            await bot.send_message(user_id, "Вы ещё не указали свою группу!", reply_markup=keyboard.GROUP_KEYBOARD)
+            await not_logged_in_yet(user_id)
 
 @dp.message_handler(commands=["tomorrow"])
 @dp.message_handler(lambda msg: msg.text.lower() == "завтра")
@@ -215,7 +222,7 @@ async def tomorrow_handler(msg: types.Message):
                     reply_markup=keyboard.IDLE_KEYBOARD
                     )
         else:
-            await bot.send_message(user_id, "Вы ещё не указали свою группу!", reply_markup=keyboard.GROUP_KEYBOARD)
+            await not_logged_in_yet(user_id)
 
 @dp.message_handler(commands=["now"])
 @dp.message_handler(lambda msg: msg.text.lower() == "сейчас")
@@ -231,7 +238,7 @@ async def now_handler(msg: types.Message):
             now = schedule.now(user_group.group)
             await bot.send_message(user_id, now, reply_markup=keyboard.IDLE_KEYBOARD)
         else:
-            await bot.send_message(user_id, "Вы ещё не указали свою группу!", reply_markup=keyboard.GROUP_KEYBOARD)
+            await not_logged_in_yet(user_id)
 
 
 @dp.message_handler(commands=["schedule"])
@@ -246,6 +253,8 @@ async def schedule_handler(msg: types.Message):
         user_info, user_group = data
         if user_info.state == BotState.IDLE and user_group is not None:
             await bot.send_message(user_id, "Какое расписание вам нужно?", reply_markup=keyboard.SCHEDULE_KEYBOARD)
+        else:
+            await not_logged_in_yet(user_id)
 
 @dp.message_handler(commands=["logout"])
 @dp.message_handler(lambda msg: msg.text.lower() == "выйти")
@@ -254,6 +263,7 @@ async def quit_handler(msg: types.Message):
     manager.logout_user(user_id)
     await bot.send_message(user_id, "Хорошо, теперь вы можете указать другую группу.\nПросто напишите её в сообщении", reply_markup=types.ReplyKeyboardRemove())
 
+# TODO make the newsletter more flexible
 @dp.message_handler(lambda msg: msg.text.lower().startswith("рассылка:"))
 async def masssend_handler(msg: types.Message):
     user_id = msg.from_user.id
@@ -268,7 +278,6 @@ async def masssend_handler(msg: types.Message):
 async def message_handler(msg: types.Message):
     user_id = msg.from_user.id
     state = manager.get_user_state(user_id)
-    print("STATE:", state)
     if state == BotState.REGISTER:
         group = msg.text
         ok = manager.group_exists(group)
@@ -303,7 +312,7 @@ async def process_schedule(callback: types.CallbackQuery):
     d, l = int(callback.data[0]), int(callback.data[1])
     user_id = callback.from_user.id
     message_id = callback.message.message_id
-    if d == 9:
+    if d == 9: # Time schedule
         await bot.edit_message_text(
             schedule.time_schedule(),
             chat_id=user_id,
@@ -311,7 +320,7 @@ async def process_schedule(callback: types.CallbackQuery):
             reply_markup=keyboard.BACK_KEYBOARD
             )
         # await bot.send_message(user_id, schedule.time_schedule(), reply_markup=keyboard.IDLE_KEYBOARD)
-    elif d == 8:
+    elif d == 8: # Is week underline
         await bot.edit_message_text(
            f"Сейчас неделя {'над' if schedule.is_overline() else 'под'} чертой", 
            chat_id=user_id,
@@ -344,7 +353,13 @@ async def process_schedule(callback: types.CallbackQuery):
                     )
                     #await bot.send_message(user_id, "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
             else:
-                await bot.send_message(user_id, "Вы ещё не указали свою группу!")
+                # await bot.send_message(user_id, "Вы ещё не указали свою группу!")
+                await bot.edit_message_text(
+                    "Вы ещё не указали свою группу!",
+                    chat_id=user_id,
+                    message_id=message_id,
+                    reply_markup=keyboard.IDLE_KEYBOARD
+                )
 
 async def morning_scheduler():
     aioschedule.every().day.at("8:00").do(morning_greeting)
