@@ -16,7 +16,7 @@ class Updater:
         for l in lessons_set:
             l_id = self.manager.session.query(db.Lesson.id).filter(db.Lesson.name == l).first()
             if l_id is None:
-                new_lessons.append(l)
+                new_lessons.append(db.Lesson(l))
         
         self.manager.session.add_all(new_lessons)
         self.manager.session.commit()
@@ -27,7 +27,7 @@ class Updater:
             a_id = self.manager.session.query(db.Author.id).filter(db.Author.name == a).first()
             if a_id is None:
                 # a_id = self.manager.add_author(a, commit=False)
-                new_authors.append(a)
+                new_authors.append(db.Author(a))
                 
         self.manager.session.add_all(new_authors)
         self.manager.session.commit()

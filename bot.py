@@ -99,7 +99,7 @@ schedule = Schedule(manager)
 keyboard = Keyboard()
 
 mailing_parser = argparse.ArgumentParser(exit_on_error=False)
-mailing_parser.add_argument("-a", "-all", action="store_true", default=False)
+mailing_parser.add_argument("-a", "--all", action="store_true", default=False)
 mailing_parser.add_argument("-g", "--groups", 
                             action="extend", 
                             dest="groups", 
@@ -293,8 +293,9 @@ async def mailing_handler(msg: types.Message):
         message_args = msg.get_args()
         try:
             args = mailing_parser.parse_args(shlex.split(message_args))
-        except argparse.ArgumentError as error:
+        except Exception as error:
             await msg.reply("error!\n\n" + str(error), reply_markup=keyboard.IDLE_KEYBOARD)
+            return
         for_all = args.all
         groups = args.groups
         message = args.message
@@ -303,7 +304,7 @@ async def mailing_handler(msg: types.Message):
             for user in all_users:
                 await bot.send_message(user.tid, message)
             await msg.reply(f"ok!\nотправлено пользователям: {len(all_users)}", reply_markup=keyboard.IDLE_KEYBOARD)
-        elif len(groups) > 0:
+        elif groups is not None and len(groups) > 0:
             users = manager.get_users_in_groups(groups)
             for user in users:
                 await bot.send_message(user.tid, message)
