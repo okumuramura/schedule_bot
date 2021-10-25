@@ -98,7 +98,15 @@ schedule = Schedule(manager)
 
 keyboard = Keyboard()
 
-mailing_parser = argparse.ArgumentParser(exit_on_error=False)
+class NoExitParser(argparse.ArgumentParser):
+    def error(self, error_msg):
+        args = {'prog': self.prog, 'message': error_msg}
+        raise Exception(('error: %(message)s\n') % args)
+
+    
+
+
+mailing_parser = NoExitParser(exit_on_error=False, add_help=False)
 mailing_parser.add_argument("-a", "--all", action="store_true", default=False)
 mailing_parser.add_argument("-g", "--groups", 
                             action="extend", 
@@ -294,7 +302,7 @@ async def mailing_handler(msg: types.Message):
         try:
             args = mailing_parser.parse_args(shlex.split(message_args))
         except Exception as error:
-            await msg.reply("error!\n\n" + str(error), reply_markup=keyboard.IDLE_KEYBOARD)
+            await msg.reply("error!\n" + str(error), reply_markup=keyboard.IDLE_KEYBOARD)
             return
         for_all = args.all
         groups = args.groups
