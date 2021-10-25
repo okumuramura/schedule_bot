@@ -185,11 +185,6 @@ class Schedule(Base):
                         classroom: str, 
                         corps: Optional[str] = None) -> None:
         self.classroom = classroom
-        if corps is None:
-            self.corps = self.try_get_corps(classroom)
-        else:
-            self.corps = corps
-        
         if type(group) == Group:
             self.group = group
         else:
