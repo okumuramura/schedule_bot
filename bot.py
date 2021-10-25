@@ -5,6 +5,8 @@ import aioschedule
 import asyncio
 import textwrap
 import base64
+import argparse
+import shlex
 
 from manager import Manager
 from schedule import Schedule
@@ -95,6 +97,16 @@ manager = Manager(db)
 schedule = Schedule(manager)
 
 keyboard = Keyboard()
+
+mailing_parser = argparse.ArgumentParser(exit_on_error=False)
+mailing_parser.add_argument("-a", "-all", action="store_true", default=False)
+mailing_parser.add_argument("-g", "--groups", 
+                            action="extend", 
+                            dest="groups", 
+                            nargs="+",
+                            type=str)
+mailing_parser.add_argument("-m", "--message", action="store", type=str)
+
 
 async def morning_greeting():
     message_template = textwrap.dedent("""\
@@ -273,6 +285,36 @@ async def masssend_handler(msg: types.Message):
         for user in all_users:
             await bot.send_message(user.tid, text)
         await bot.send_message(user_id, "ok!", reply_markup=keyboard.IDLE_KEYBOARD)
+
+@dp.message_handler(commands=["mailing"]) # v2
+async def mailing_handler(msg: types.Message):
+    user_id = msg.from_user.id
+    if user_id in ADMINS:
+        message_args = msg.get_args()
+        try:
+            args = mailing_parser.parse_args(shlex.split(message_args))
+        except argparse.ArgumentError as error:
+            await msg.reply("error!\n\n" + str(error), reply_markup=keyboard.IDLE_KEYBOARD)
+        for_all = args.all
+        groups = args.groups
+        message = args.message
+        if for_all:
+            all_users = manager.get_all_users()
+            for user in all_users:
+                await bot.send_message(user.tid, message)
+            await msg.reply(f"ok!\nотправлено пользователям: {len(all_users)}", reply_markup=keyboard.IDLE_KEYBOARD)
+        elif len(groups) > 0:
+            users = manager.get_users_in_groups(groups)
+            for user in users:
+                await bot.send_message(user.tid, message)
+            await msg.reply(f"ok!\nотправлено пользователям: {len(users)}", reply_markup=keyboard.IDLE_KEYBOARD)
+        else:
+            await msg.reply(
+                f"Не указаны фильтры для отправки. Чтобы отправить сообщение всем, испольуйте ключ -a или --all",
+                reply_markup=keyboard.IDLE_KEYBOARD
+            )
+
+
 
 @dp.message_handler()
 async def message_handler(msg: types.Message):

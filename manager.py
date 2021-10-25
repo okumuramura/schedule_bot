@@ -71,6 +71,9 @@ class Manager:
     def get_all_users(self) -> List[db.ActiveUser]:
         return self.session.query(db.ActiveUser).all()
 
+    def get_users_in_groups(self, groups: List[str]) -> List[db.ActiveUser]:
+        return self.session.query(db.ActiveUser).join(db.Group).filter(db.Group.group.in_(groups)).all()
+
     def add_group(self, group, commit = True) -> int:
         group = db.Group(group)
         self.session.add(group)
