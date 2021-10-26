@@ -276,6 +276,23 @@ async def schedule_handler(msg: types.Message):
         else:
             await not_logged_in_yet(user_id)
 
+
+@dp.message_handler(commands=["week"])
+async def week_handler(msg: types.Message):
+    user_id = msg.from_user.id
+    await bot.send_message(
+            user_id,
+            f"Сейчас неделя {'над' if schedule.is_overline() else 'под'} чертой"    
+        )
+
+@dp.message_handler(commands=["times"])
+async def times_handler(msg: types.Message):
+    user_id = msg.from_user.id
+    await bot.send_message(
+        user_id,
+        schedule.time_schedule()
+    )
+
 @dp.message_handler(commands=["logout"])
 @dp.message_handler(lambda msg: msg.text.lower() == "выйти")
 async def quit_handler(msg: types.Message):
@@ -322,8 +339,6 @@ async def mailing_handler(msg: types.Message):
                 f"Не указаны фильтры для отправки. Чтобы отправить сообщение всем, испольуйте ключ -a или --all",
                 reply_markup=keyboard.IDLE_KEYBOARD
             )
-
-
 
 @dp.message_handler()
 async def message_handler(msg: types.Message):
