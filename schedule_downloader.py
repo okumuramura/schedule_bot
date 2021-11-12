@@ -1,9 +1,11 @@
-from bs4 import BeautifulSoup
-import requests
+import asyncio
 import os
 from os import path
+
 import aiohttp
-import asyncio
+import requests
+from bs4 import BeautifulSoup
+
 
 def download(dest = "./"):
     os.makedirs(dest, exist_ok = True)

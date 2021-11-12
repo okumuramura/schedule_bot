@@ -1,20 +1,20 @@
+import argparse
+import asyncio
+import base64
+import logging
+import shlex
+import textwrap
+
+import aioschedule
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.utils.emoji import emojize
-import logging
-import aioschedule
-import asyncio
-import textwrap
-import base64
-import argparse
-import shlex
 
+import info  # personal information
+import weather
+from db import ActiveUser
 from manager import Manager
 from schedule import Schedule
-from db import ActiveUser
 from times import Times
-import weather
-
-import info # personal information
 
 KEY: str = info.KEY # bot token
 ADMINS: list = info.ADMINS # list of telegram ids here
@@ -106,10 +106,10 @@ class NoExitParser(argparse.ArgumentParser):
     
 
 
-mailing_parser = NoExitParser(exit_on_error=False, add_help=False)
+mailing_parser = NoExitParser(add_help=False)
 mailing_parser.add_argument("-a", "--all", action="store_true", default=False)
 mailing_parser.add_argument("-g", "--groups", 
-                            action="extend", 
+                            action="store", # extend? 
                             dest="groups", 
                             nargs="+",
                             type=str)

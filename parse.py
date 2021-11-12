@@ -1,14 +1,14 @@
-from typing import Optional, Dict, List, Set
-
-import xlrd
-import numpy as np
-import re
-import logging
-from updater import Updater
-import os
-import colorama
-
 import argparse
+import logging
+import os
+import re
+from typing import Dict, List, Optional, Set
+
+import colorama
+import numpy as np
+import xlrd
+
+from updater import Updater
 
 
 class Lesson:
