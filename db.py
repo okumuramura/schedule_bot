@@ -1,19 +1,13 @@
-from typing import Optional, Union, List, Any
+import argparse
+from typing import Any, List, Optional, Union
 
-from sqlalchemy import create_engine
-from sqlalchemy import MetaData, ForeignKey
-from sqlalchemy import Table, Column
-from sqlalchemy import Integer, Time, String, Boolean
+from sqlalchemy import (Boolean, Column, ForeignKey, Integer, MetaData, String,
+                        Table, Time, create_engine, select)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
-from sqlalchemy import select
-
-import argparse
-
-from times import Times
 
 import info
-
+from times import Times
 
 metadata = MetaData()
 Base = declarative_base()

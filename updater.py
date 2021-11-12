@@ -1,5 +1,5 @@
-from manager import Manager
 import db
+from manager import Manager
 
 
 class Updater:

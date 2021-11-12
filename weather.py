@@ -1,10 +1,10 @@
+import asyncio
+import logging
 from typing import Optional
 
-import asyncio
 import aiohttp
-import info
 
-import logging
+import info
 
 API_KEY = info.WEATHER_KEY
 

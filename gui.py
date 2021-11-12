@@ -1,15 +1,16 @@
-from typing import Optional, List
 import sys
+from typing import List, Optional
 
 try:
-    from PySide6 import QtWidgets, QtGui, QtCore
+    from PySide6 import QtCore, QtGui, QtWidgets
 except ImportError:
     from PySide2 import QtWidgets, QtGui, QtCore
 
-from manager import Manager
-import db
-
 import argparse
+
+import db
+from manager import Manager
+
 
 class LessonHeader(QtWidgets.QWidget):
     def __init__(self):

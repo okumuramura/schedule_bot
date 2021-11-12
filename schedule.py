@@ -1,11 +1,11 @@
-from times import Times
-
 import datetime
+
+import db
+from manager import Manager
+from times import Times
 
 # from sqlalchemy.sql.elements import Null
 
-from manager import Manager
-import db
 
 class NowAndNext:
     def __init__(self, now_lesson: db.Schedule, next_lesson: db.Schedule, 
