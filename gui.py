@@ -1,7 +1,16 @@
 import sys
-from PySide2 import QtWidgets, QtGui, QtCore
+from typing import List, Optional
 
+try:
+    from PySide6 import QtCore, QtGui, QtWidgets
+except ImportError:
+    from PySide2 import QtWidgets, QtGui, QtCore
+
+import argparse
+
+import db
 from manager import Manager
+
 
 class LessonHeader(QtWidgets.QWidget):
     def __init__(self):
@@ -138,16 +147,16 @@ class LessonTable(QtWidgets.QWidget):
             if sch.classroom:
                 row.auditory.setText(sch.classroom)
 
-    def update_items(self, data):
-        self.groups = data["groups"]
-        self.lessons = data["lessons"]
-        self.types = data["types"]
-        self.authors = data["authors"]
+    def update_items(self, data) -> None:
+        self.groups: List[db.Group] = data["groups"]
+        self.lessons: List[db.Lesson] = data["lessons"]
+        self.types: List[db.LessonType] = data["types"]
+        self.authors: List[db.Author] = data["authors"]
 
-        self.group_names = [""] + [x.group for x in self.groups]
-        self.lesson_names = [""] + [x.name for x in self.lessons]
-        self.type_names = [""] + [x.type for x in self.types]
-        self.author_names = [""] + [x.name for x in self.authors]
+        self.group_names: List[str] = [""] + [x.group for x in self.groups]
+        self.lesson_names: List[str] = [""] + [x.name for x in self.lessons]
+        self.type_names: List[str] = [""] + [x.type for x in self.types]
+        self.author_names: List[str] = [""] + [x.name for x in self.authors]
 
         row: LessonRow
         for row in self.lesson_rows:
@@ -160,7 +169,7 @@ class LessonTable(QtWidgets.QWidget):
             row.lesson.setCurrentText(lstr)
             row.author.setCurrentText(astr)
 
-    def remove_row(self, id):
+    def remove_row(self, id: int) -> None:
         self.row_removed.emit(id)
 
 
@@ -179,9 +188,9 @@ class MainWindow(QtWidgets.QWidget):
         "Суббота" : 5
     }
 
-    def __init__(self):
+    def __init__(self, db: str) -> None:
         super().__init__()
-        self.manager = Manager("sqlite:///lessons.db")
+        self.manager = Manager(db)
         self.prepare_data()
         self.prepare_table()
 
@@ -228,12 +237,12 @@ class MainWindow(QtWidgets.QWidget):
 
     def prepare_data(self):
         self.data = self.manager.get_data()
-        self.groups : list = self.data["groups"]
-        self.lessons : list = self.data["lessons"]
-        self.authors : list = self.data["authors"]
-        self.types : list = self.data["types"]
+        self.groups : List[db.Group] = self.data["groups"]
+        self.lessons : List[db.Lesson] = self.data["lessons"]
+        self.authors : List[db.Author] = self.data["authors"]
+        self.types : List[db.LessonType] = self.data["types"]
 
-        self.group_names = [x.group for x in self.groups]
+        self.group_names: List[str] = [x.group for x in self.groups]
 
     def prepare_table(self):
         self.scroll_area = QtWidgets.QScrollArea()
@@ -302,11 +311,11 @@ class MainWindow(QtWidgets.QWidget):
                     self.lesson_table.update_items(self.data)
                 
 
-    def day2int(self, weekday):
+    def day2int(self, weekday: str) -> int:
         return self.WEEKDAYS.get(weekday, -1)
 
     @QtCore.Slot(int)
-    def remove_lesson(self, id):
+    def remove_lesson(self, id: int) -> None:
         gstr = self.group_dialog.textValue()
         gid = self.groups.index(gstr) + 1
 
@@ -317,9 +326,17 @@ class MainWindow(QtWidgets.QWidget):
         self.manager.delete_schedule(gid, weekday, is_overline, id)
 
 
-app = QtWidgets.QApplication([])
+if __name__ == "__main__":
+    DEFAULT_DB = "sqlite://lessons.db"
+    argument_parser = argparse.ArgumentParser()
+    argument_parser.add_argument("-b", "--db", action="store", dest="db", type=str, default=DEFAULT_DB, help="database url (%s by default)" % DEFAULT_DB)
 
-window = MainWindow()
-window.show()
+    args = argument_parser.parse_args()
+    db = args.db
 
-sys.exit(app.exec_())
+    app = QtWidgets.QApplication([])
+
+    window = MainWindow(db)
+    window.show()
+
+    sys.exit(app.exec_())

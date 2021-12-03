@@ -1,11 +1,11 @@
-from times import Times
-
 import datetime
+
+import db
+from manager import Manager
+from times import Times
 
 # from sqlalchemy.sql.elements import Null
 
-from manager import Manager
-import db
 
 class NowAndNext:
     def __init__(self, now_lesson: db.Schedule, next_lesson: db.Schedule, 
@@ -65,8 +65,8 @@ class NowAndNext:
 
 class Schedule:
 
-    def __init__(self):
-        self.manager = Manager("sqlite:///lessons.db")
+    def __init__(self, manager):
+        self.manager = manager
         self._time_schedule = ""
         for i, (b, e) in enumerate(zip(Times.lesson_begins, Times.lesson_ends)):
             self._time_schedule += f"{i+1}. {b.strftime('%H:%M')} - {e.strftime('%H:%M')}\n"
@@ -153,13 +153,6 @@ class Schedule:
         return (datetime.datetime.min + (d1 - d2)).time()
 
         
-                
-
-if __name__ == "__main__":
-    schedule = Schedule()
-    #print(schedule.now("Б19-191-2"))
-    # for i, (b, e) in enumerate(zip(schedule.lesson_begins, schedule.lesson_ends)):
-    #     print(f"{i}. {b}-{e}")
-    #print(schedule.tomorrow("Б19-191-2"))
+            
     
 
