@@ -73,7 +73,7 @@ async def get_weather(location: int = 296181) -> Optional[str]:
                 )
                 return result
             else:
-                logging.warning("weather page status code: " + str(resp.status))
+                logging.warning("weather page status code: %d", resp.status)
                 return None
 
 

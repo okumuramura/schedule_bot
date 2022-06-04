@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union, Dict, Any, Optional
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -20,7 +20,7 @@ class Manager:
     def get_authors(self) -> List[db.Lesson]:
         return self.session.query(db.Author).all()
 
-    def get_schedule(self, group, weekday, on_line):
+    def get_schedule(self, group: Union[str, db.Group], weekday: int, on_line: bool):
         if type(group) == str:
             group = (
                 self.session.query(db.Group)
@@ -44,7 +44,7 @@ class Manager:
         )
         return data
 
-    def get_lesson_by_num(self, group, weekday, on_line, num, next=False):
+    def get_lesson_by_num(self, group: Union[str, db.Group], weekday: int, on_line: bool, num: int, next: bool = False):
         if type(group) == str:
             group = (
                 self.session.query(db.Group)
@@ -76,7 +76,7 @@ class Manager:
         return lesson
 
     def get_author_schedule(
-        self, author, weekday: int, is_overline: bool
+        self, author: Union[str, db.Author], weekday: int, is_overline: bool
     ) -> List[db.Schedule]:
         if type(author) == str:
             author = (
@@ -96,7 +96,7 @@ class Manager:
         )
         return data
 
-    def get_data(self) -> dict:
+    def get_data(self) -> Dict[str, List[Any]]:
         data = {}
         data["lessons"] = self.session.query(db.Lesson).all()
         data["authors"] = self.session.query(db.Author).all()
@@ -115,14 +115,14 @@ class Manager:
             .all()
         )
 
-    def add_group(self, group, commit=True) -> int:
+    def add_group(self, group: str, commit: bool = True) -> int:
         group = db.Group(group)
         self.session.add(group)
         if commit:
             self.session.commit()
         return group.id
 
-    def group_exists(self, name) -> bool:
+    def group_exists(self, name: str) -> bool:
         return (
             self.session.query(db.Group.group)
             .filter(db.Group.group == name)
@@ -130,35 +130,35 @@ class Manager:
             is not None
         )
 
-    def group_id(self, group) -> int:
+    def group_id(self, group: str) -> int:
         return (
             self.session.query(db.Group.id)
             .filter(db.Group.group == group)
             .first()
         )
 
-    def add_lesson(self, name, commit=True) -> int:
+    def add_lesson(self, name: str, commit: bool = True) -> int:
         lesson = db.Lesson(name)
         self.session.add(lesson)
         if commit:
             self.session.commit()
         return lesson.id
 
-    def add_lessons(self, names: list, commit: bool = True) -> List[int]:
+    def add_lessons(self, names: List[str], commit: bool = True) -> List[int]:
         lessons = [db.Lesson(name) for name in names]
         self.session.add(lessons)
         if commit:
             self.session.commit()
         return [lesson.id for lesson in lessons]
 
-    def add_author(self, name: str, commit=True) -> int:
+    def add_author(self, name: str, commit: bool = True) -> int:
         author = db.Author(name)
         self.session.add(author)
         if commit:
             self.session.commit()
         return author.id
 
-    def add_authors(self, names: List[str], commit=True) -> List[int]:
+    def add_authors(self, names: List[str], commit: bool = True) -> List[int]:
         authors = [db.Author(name) for name in names]
         self.session.add_all(authors)
         if commit:
@@ -167,16 +167,16 @@ class Manager:
 
     def add_schedule(
         self,
-        group,
-        lesson,
-        author,
-        lesson_type,
-        num,
-        weekday,
-        is_overline,
-        classroom,
-        corps=None,
-        commit=True,
+        group: Union[str, db.Group],
+        lesson: Union[str, db.Lesson],
+        author: Union[str, db.Author],
+        lesson_type: Union[str, db.LessonType],
+        num: int,
+        weekday: int,
+        is_overline: bool,
+        classroom: str,
+        corps: Optional[str] = None,
+        commit: bool = True,
     ) -> int:
         schedule = db.Schedule(
             group,

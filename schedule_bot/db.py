@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import argparse
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, List
 
 from sqlalchemy import (
     Boolean,
@@ -8,7 +10,6 @@ from sqlalchemy import (
     Integer,
     MetaData,
     String,
-    Table,
     create_engine,
 )
 from sqlalchemy.ext.declarative import declarative_base
@@ -30,68 +31,13 @@ class Weekday:
     SUNDAY = 6
 
 
-groups = Table(
-    "groups",
-    metadata,
-    Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("group", String(20), nullable=False),
-)
-
-lessons = Table(
-    "lessons",
-    metadata,
-    Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("name", String(200)),
-    Column("type", String(50)),
-)
-
-authors = Table(
-    "authors",
-    metadata,
-    Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("name", String(100)),
-    Column("department", String(5)),
-)
-
-schedule = Table(
-    "schedule",
-    metadata,
-    Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("on_line", Boolean),
-    Column("classroom", String(30)),
-    Column("corps", Integer, nullable=True),
-    Column("weekday", Integer),
-    Column("num", Integer),
-    Column("group_id", Integer, ForeignKey("groups.id")),
-    Column("lesson_id", Integer, ForeignKey("lessons.id"), nullable=False),
-    Column("author_id", Integer, ForeignKey("authors.id")),
-    Column("lesson_type_id", Integer, ForeignKey("lesson_types.id")),
-)
-
-lesson_types = Table(
-    "lesson_types",
-    metadata,
-    Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("type", String(30)),
-)
-
-active_users = Table(
-    "active_users",
-    metadata,
-    Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("tid", Integer, unique=True, nullable=False),
-    Column("group_id", Integer, ForeignKey("groups.id")),
-    Column("state", Integer, default=0),
-)
-
-
 class Group(Base):
     __tablename__ = "groups"
 
     id: int = Column(Integer, primary_key=True)
     group: str = Column(String(20), nullable=False)
-    schedules = relationship(
-        "Schedule", order_by=schedule.c.id, back_populates="group"
+    schedules: List[Schedule] = relationship(
+        "Schedule", order_by='schedule.id', back_populates="group"
     )
 
     def __init__(self, group: str) -> None:
@@ -117,8 +63,8 @@ class Author(Base):
     name: str = Column(String(100))
     department: str = Column(String(5))
 
-    schedules = relationship(
-        "Schedule", order_by=schedule.c.id, back_populates="author"
+    schedules: List[Schedule] = relationship(
+        "Schedule", order_by='schedule.id', back_populates="author"
     )
 
     def __init__(self, name: str, department: str = "") -> None:
@@ -144,7 +90,7 @@ class Lesson(Base):
     id: int = Column(Integer, primary_key=True)
     name: str = Column(String(150))
 
-    schedules = relationship("Schedule", back_populates="lesson")
+    schedules: List[Schedule] = relationship("Schedule", back_populates="lesson")
 
     def __init__(self, name: str) -> None:
         self.name = name
@@ -192,10 +138,10 @@ class Schedule(Base):
     author_id: int = Column(Integer, ForeignKey("authors.id"))
     lesson_type_id: int = Column(Integer, ForeignKey("lesson_types.id"))
 
-    group = relationship("Group", back_populates="schedules")
-    lesson = relationship("Lesson", back_populates="schedules")
-    author = relationship("Author", back_populates="schedules")
-    lesson_type = relationship("LessonType")
+    group: Group = relationship("Group", back_populates="schedules")
+    lesson: Lesson = relationship("Lesson", back_populates="schedules")
+    author: Author = relationship("Author", back_populates="schedules")
+    lesson_type: LessonType = relationship("LessonType")
 
     def __init__(
         self,
@@ -260,7 +206,7 @@ class ActiveUser(Base):
     group_id: int = Column(Integer, ForeignKey("groups.id"))
     state: int = Column(Integer, default=0)
 
-    group = relationship("Group")
+    group: Group = relationship("Group")
 
     def __init__(self, tid: int, group: Union[Group, int, None] = None) -> None:
         self.tid = tid

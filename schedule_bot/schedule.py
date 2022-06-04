@@ -1,7 +1,7 @@
 import datetime
 
 import db
-from times import Times
+from schedule_bot.utils.times import Times
 
 
 class NowAndNext:
