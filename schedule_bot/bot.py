@@ -4,16 +4,18 @@ import base64
 import logging
 import shlex
 import textwrap
+from typing import Any
 
 import aioschedule
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.utils.emoji import emojize
 
-from schedule_bot import info, weather
+from schedule_bot import info
 from schedule_bot.db import ActiveUser
 from schedule_bot.manager import Manager
 from schedule_bot.schedule import Schedule
 from schedule_bot.times import Times
+from schedule_bot.utils import weather
 
 KEY: str = info.KEY  # bot token
 ADMINS: list = info.ADMINS  # list of telegram ids here
@@ -550,7 +552,7 @@ async def morning_scheduler():
         await asyncio.sleep(10)
 
 
-async def setup(_):
+async def setup(_: Any):
     asyncio.create_task(morning_scheduler())
 
 

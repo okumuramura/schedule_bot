@@ -1,3 +1,4 @@
+from typing import Tuple, Literal
 import datetime
 
 
@@ -48,7 +49,7 @@ class Times:
     ]
 
     @staticmethod
-    def lesson_time(lesson_num: int, format: str = "%H:%M") -> tuple:
+    def lesson_time(lesson_num: int, format: str = "%H:%M") -> Tuple[str, str]:
         return (
             Times.lesson_begins[lesson_num - 1].strftime(format),
             Times.lesson_ends[lesson_num - 1].strftime(format),
@@ -63,17 +64,17 @@ class Times:
         return Times.weekdays[(datetime.datetime.today().weekday() + 1) % 7]
 
     @staticmethod
-    def today_month(case="nominative") -> str:
-        allowed_cases = ["nominative", "genitive"]
+    def today_month(case: Literal['nominative', 'genitive'] = 'nominative') -> str:
+        allowed_cases = ['nominative', 'genitive']
         if case in allowed_cases:
             return Times.months[(datetime.datetime.today().month - 1)].get(case)
         else:
             assert KeyError(
-                f"Wrong case!, allowed: {', '.join(allowed_cases)}."
+                f'Wrong case!, allowed: {", ".join(allowed_cases)}.'
             )
 
     @staticmethod
     def today_date() -> str:
         return (
-            f"{datetime.datetime.today().day} {Times.today_month('genitive')}"
+            f'{datetime.datetime.today().day} {Times.today_month("genitive")}'
         )
