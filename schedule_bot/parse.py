@@ -12,13 +12,15 @@ from schedule_bot.updater import Updater
 
 
 class Lesson:
-    def __init__(self, 
-                name: str, 
-                author: str = None, 
-                auditory: str = None, 
-                lesson_type: str = None,
-                department: str = None,
-                raw: str = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        author: str = None,
+        auditory: str = None,
+        lesson_type: str = None,
+        department: str = None,
+        raw: str = None,
+    ) -> None:
         self.name: str = name
         self.author: str = author
         self.auditory: str = auditory
@@ -28,40 +30,40 @@ class Lesson:
 
     def is_full(self) -> bool:
         return self.is_pe() or not (
-            self.name is None or
-            self.department is None or
-            self.author is None or
-            self.auditory is None or
-            self.lesson_type is None
+            self.name is None
+            or self.department is None
+            or self.author is None
+            or self.auditory is None
+            or self.lesson_type is None
         )
 
     def is_pe(self) -> bool:
-        return self.name is not None and self.name == "Физическая культура и спорт"
+        return (
+            self.name is not None and self.name == "Физическая культура и спорт"
+        )
 
     def __eq__(self, o) -> bool:
-        return (type(o) == type(self) and
-            self.name == o.name and
-            self.author == o.author and
-            self.auditory == o.auditory and
-            self.lesson_type == o.lesson_type and
-            self.department == o.department
-            )
+        return (
+            type(o) == type(self)
+            and self.name == o.name
+            and self.author == o.author
+            and self.auditory == o.auditory
+            and self.lesson_type == o.lesson_type
+            and self.department == o.department
+        )
 
     def __str__(self) -> str:
         if not self.is_full():
             return f"{colorama.Fore.RED}{str(self.department):^5}|{self.lesson_type.__str__():^16}|{str(self.name):^120}|{str(self.author):^25}|{str(self.auditory):^8} {colorama.Fore.BLUE}{self.raw:^120}{colorama.Fore.RESET}"
         return f"{str(self.department):^5}|{self.lesson_type.__str__():^16}|{str(self.name):^120}|{str(self.author):^25}|{str(self.auditory):^8} {colorama.Fore.BLUE}{self.raw:^120}{colorama.Fore.RESET}"
-        #return f"({self.department})({self.lesson_type}) {self.name} - {self.author} {self.auditory}"
-        
+        # return f"({self.department})({self.lesson_type}) {self.name} - {self.author} {self.auditory}"
+
 
 def parse_lesson_exp(lesson_line: str) -> Lesson:
-
     def short_name(s: str, start_pos: Optional[int] = None) -> str:
         sp = start_pos is not None
-        LONG_NAMES = [
-            "Аль Аккад Мхд Айман"
-        ]
-        
+        LONG_NAMES = ["Аль Аккад Мхд Айман"]
+
         if s in LONG_NAMES:
             if sp:
                 return s, start_pos
@@ -72,9 +74,12 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
             if sp:
                 start_pos += len(" ".join(names)) - len(" ".join(names[-3:]))
             names = names[-3:]
-            
+
         if sp:
-            return f"{names[0].capitalize()} {names[1][0]}.{names[2][0]}.", start_pos
+            return (
+                f"{names[0].capitalize()} {names[1][0]}.{names[2][0]}.",
+                start_pos,
+            )
         return f"{names[0].capitalize()} {names[1][0]}.{names[2][0]}."
 
     def format_auditory(s: str) -> str:
@@ -89,7 +94,7 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
         if re.search(r"ИжНТ", s, re.IGNORECASE) is not None:
             return "ИжНТ"
 
-        s = re.sub("(\s)|(к.)|(К.)", "", s)
+        s = re.sub(r"(\s)|(к.)|(К.)", "", s)
         return s
 
     def format_type(s: str) -> str:
@@ -106,15 +111,26 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
 
         return "+".join(final_type)
 
-
     lesson_line = lesson_line.replace("\n", " ")
-    #author_name = re.compile(r"[А-Я][а-я]+\s([А-Я](([а-я]+)|\.)\s?)+[А-Я]([а-я]+)?\.?")
-    authorname_re = re.compile(r"(((пр\.)|(доц\.)|(проф\.))\s*)?(?P<ath>([А-ЯЁ][А-Яа-яё]+(\s|\.)+(\s|\.)?[А-ЯЁ](\s|\.)+(\s|\.)?[А-ЯЁ]\.?)|(([А-ЯЁ][а-яё]+\s?){3,}))")
+    # author_name = re.compile(r"[А-Я][а-я]+\s([А-Я](([а-я]+)|\.)\s?)+[А-Я]([а-я]+)?\.?")
+    authorname_re = re.compile(
+        r"(((пр\.)|(доц\.)|(проф\.))\s*)?(?P<ath>([А-ЯЁ][А-Яа-яё]+(\s|\.)+(\s|\.)?[А-ЯЁ](\s|\.)+(\s|\.)?[А-ЯЁ]\.?)|(([А-ЯЁ][а-яё]+\s?){3,}))"
+    )
     department_re = re.compile(r"^\s*\(?(?P<dep>\d+\w?)\)?")
-    classroom_re = re.compile(r"((БИ|(\d(к.)?))\w?\s?-(ОД-)?\s?\d+\w?\d?((/\d[^\-/]*)|(\-[\d\w]+))?)|(ЭОиДОТ)|(ООО\s?[«\"][\w-]+[»\"])|(ижводоканал)|(ИжНТ)", re.IGNORECASE)
-    lesson_type_re = re.compile(r"[\(\s](?P<type>((леке?ц?и?я?\.*)?\s?\+?\s?(практ?и?к?а?\.*)?\s?\+?\s?((л[/\.]\s?р?\.*)|(лаб\.*))?\s?\+?\s?(практ?и?к?а?\.*)?\s?\+?\s?(леке?ц?и?я?\.*)?))(\s\d(,\s?\d)?\sп/гр)?[\)\s]", re.IGNORECASE)
-    lesson_re = re.compile(r"\s*((\(?[\w\s/+\.,-]+\)\s*)|(\([\w\s/+\.,-]+\)?\s*))*(?P<name>[\w\sё\.,-]{3,})(\s*(\([\w\s/+\.,-]+\)\s*))*(,\s*)?")
-    lesson_re_no_author = re.compile(r"\s*(\(?[\w\s/+\.,-]+\)\s*)*(?P<name>[\w\sё\.-]{3,})(\s*(\([\w\s/+\.,-]+\)\s*))*(,\s*)?")
+    classroom_re = re.compile(
+        r"((БИ|(\d(к.)?))\w?\s?-(ОД-)?\s?\d+\w?\d?((/\d[^\-/]*)|(\-[\d\w]+))?)|(ЭОиДОТ)|(ООО\s?[«\"][\w-]+[»\"])|(ижводоканал)|(ИжНТ)",
+        re.IGNORECASE,
+    )
+    lesson_type_re = re.compile(
+        r"[\(\s](?P<type>((леке?ц?и?я?\.*)?\s?\+?\s?(практ?и?к?а?\.*)?\s?\+?\s?((л[/\.]\s?р?\.*)|(лаб\.*))?\s?\+?\s?(практ?и?к?а?\.*)?\s?\+?\s?(леке?ц?и?я?\.*)?))(\s\d(,\s?\d)?\sп/гр)?[\)\s]",
+        re.IGNORECASE,
+    )
+    lesson_re = re.compile(
+        r"\s*((\(?[\w\s/+\.,-]+\)\s*)|(\([\w\s/+\.,-]+\)?\s*))*(?P<name>[\w\sё\.,-]{3,})(\s*(\([\w\s/+\.,-]+\)\s*))*(,\s*)?"
+    )
+    lesson_re_no_author = re.compile(
+        r"\s*(\(?[\w\s/+\.,-]+\)\s*)*(?P<name>[\w\sё\.-]{3,})(\s*(\([\w\s/+\.,-]+\)\s*))*(,\s*)?"
+    )
     delta = 0
     author = authorname_re.search(lesson_line)
     if author is not None:
@@ -123,19 +139,18 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
         t = re.search(r"^(?P<t>\s*((пр\.)|(доц\.)|(проф\.))\s*)", g)
         if t is not None:
             delta = len(t.group("t"))
-            
+
         author = author.group("ath")
         author = author.rstrip()
-        
-        
+
     department = department_re.search(lesson_line)
     if department is not None:
         department = department.group("dep")
-    
+
     auditory = classroom_re.search(lesson_line)
     if auditory is not None:
         auditory = format_auditory(auditory.group(0))
-    
+
     lesson_type = lesson_type_re.search(lesson_line)
     if lesson_type is not None:
         lesson_type = format_type(lesson_type.group("type"))
@@ -154,18 +169,19 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
     if lesson_name is not None:
         lesson_name = lesson_name.group("name").strip(", ")
 
-    
     return Lesson(
         lesson_name,
-        author = author,
-        department = department,
-        raw = lesson_line,
-        auditory = auditory,
-        lesson_type = lesson_type
+        author=author,
+        department=department,
+        raw=lesson_line,
+        auditory=auditory,
+        lesson_type=lesson_type,
     )
 
 
-PREFIX = 0    
+PREFIX = 0
+
+
 def parse_table(tablename: str) -> Dict[str, np.ndarray]:
     global PREFIX
     data = xlrd.open_workbook(tablename, formatting_info=True)
@@ -192,6 +208,7 @@ def parse_table(tablename: str) -> Dict[str, np.ndarray]:
         PREFIX += 1
     return mats
 
+
 def parse_sheet(sheet: np.ndarray) -> Dict[str, List[Optional[Lesson]]]:
     global ERRORS
     global PASSED
@@ -215,45 +232,45 @@ def parse_sheet(sheet: np.ndarray) -> Dict[str, List[Optional[Lesson]]]:
                 logging.debug("GROUP: " + group)
                 ls = []
                 for d in range(1, 85):
-                    lesson = sheet[x][y+d]
+                    lesson = sheet[x][y + d]
                     if lesson.strip() != "":
                         TOTAL += 1
                         try:
-                            l = parse_lesson_exp(sheet[x][y+d])
+                            lesson_info = parse_lesson_exp(sheet[x][y + d])
 
-                            if l is not None:
-                                if l.name is not None:
-                                    LESSONS_SET.add(l.name)
-                                if l.author is not None:
-                                    AUTHORS_SET.add(l.author)
-                                
+                            if lesson_info is not None:
+                                if lesson_info.name is not None:
+                                    LESSONS_SET.add(lesson_info.name)
+                                if lesson_info.author is not None:
+                                    AUTHORS_SET.add(lesson_info.author)
+
                                 if SHOW == "ALL":
                                     if PROGRESS:
-                                        if l.auditory == "2-134/2":
-                                            tqdm.write(l.__str__())
+                                        if lesson_info.auditory == "2-134/2":
+                                            tqdm.write(lesson_info.__str__())
                                     else:
-                                        print(l)
-                                if not l.is_full():
+                                        print(lesson_info)
+                                if not lesson_info.is_full():
                                     if SHOW == "INCOMPLETE":
                                         if PROGRESS:
-                                            tqdm.write(l.__str__())
+                                            tqdm.write(lesson_info.__str__())
                                         else:
-                                            print(l)
+                                            print(lesson_info)
                                     INCOMPLETE += 1
-                                if l.name is None:
+                                if lesson_info.name is None:
                                     UNNAMED += 1
-                            ls.append(l)
+                            ls.append(lesson_info)
                             PASSED += 1
                         except AttributeError:
                             logging.error(lesson.replace("\n", " "))
                             ERRORS += 1
-                            
+
                     else:
                         ls.append(None)
                 lessons.update({group: ls})
-    
+
     return lessons
-    
+
 
 colorama.init(convert=True)
 
@@ -278,20 +295,59 @@ if __name__ == "__main__":
     DEFAULT_DB = "sqlite://lessons.db"
 
     argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument("-d", "--dir", dest="dir", action="store", type=str, default="./", help="directory with files")
-    argument_parser.add_argument("-a", "--all", dest="show", action="store_const", const="ALL", default="NO", help = "show all lessons")
-    argument_parser.add_argument("-i", "--incomplete", dest="show", action="store_const", const="INCOMPLETE", default="NO", help = "show only incomplete lessons")
-    argument_parser.add_argument("-b", "--db", dest="db", action="store", type=str, default=DEFAULT_DB, help="database url (%s by defaul)" % DEFAULT_DB)
-    argument_parser.add_argument("--debug", dest = "debug", action="store_true", help="set debug mode")
-    argument_parser.add_argument("-f", "--force", dest="force", action="store_true", help="put data into database without dialog message")
-
+    argument_parser.add_argument(
+        "-d",
+        "--dir",
+        dest="dir",
+        action="store",
+        type=str,
+        default="./",
+        help="directory with files",
+    )
+    argument_parser.add_argument(
+        "-a",
+        "--all",
+        dest="show",
+        action="store_const",
+        const="ALL",
+        default="NO",
+        help="show all lessons",
+    )
+    argument_parser.add_argument(
+        "-i",
+        "--incomplete",
+        dest="show",
+        action="store_const",
+        const="INCOMPLETE",
+        default="NO",
+        help="show only incomplete lessons",
+    )
+    argument_parser.add_argument(
+        "-b",
+        "--db",
+        dest="db",
+        action="store",
+        type=str,
+        default=DEFAULT_DB,
+        help="database url (%s by defaul)" % DEFAULT_DB,
+    )
+    argument_parser.add_argument(
+        "--debug", dest="debug", action="store_true", help="set debug mode"
+    )
+    argument_parser.add_argument(
+        "-f",
+        "--force",
+        dest="force",
+        action="store_true",
+        help="put data into database without dialog message",
+    )
 
     args = argument_parser.parse_args()
     SHOW: str = args.show
     db_url: str = args.db
     filedir: str = args.dir
     DEBUG: bool = args.debug
-    #sheets = parse_table("./table.xls")
+    # sheets = parse_table("./table.xls")
 
     if DEBUG:
         logging.basicConfig(level=logging.DEBUG)
@@ -317,11 +373,13 @@ if __name__ == "__main__":
         sheets = parse_table(table)
         for sheet_name, sheet in sheets.items():
             logging.debug("   SHEET: " + sheet_name)
-            l = parse_sheet(sheet)
-            lessons.update(l)
+            group_schedule = parse_sheet(sheet)
+            lessons.update(group_schedule)
 
     print(f"Total: {TOTAL}")
-    print(f"{colorama.Fore.YELLOW}Incomplete: {INCOMPLETE}{colorama.Fore.RESET}")
+    print(
+        f"{colorama.Fore.YELLOW}Incomplete: {INCOMPLETE}{colorama.Fore.RESET}"
+    )
     print(f"{colorama.Fore.GREEN}Passed: {PASSED}{colorama.Fore.RESET}")
     print(f"{colorama.Fore.RED}Unnamed: {UNNAMED}{colorama.Fore.RESET}")
     print(f"{colorama.Fore.RED}Errors: {ERRORS}{colorama.Fore.RESET}")
@@ -330,10 +388,10 @@ if __name__ == "__main__":
     if is_updating.lower() == "y":
         upd = Updater(db_url)
         upd.clear_schedule()
-        print("Adding lessons list: ", end = "")
+        print("Adding lessons list: ", end="")
         upd.add_lessons(LESSONS_SET)
         print("OK")
-        print("Adding authors list: ", end = "")
+        print("Adding authors list: ", end="")
         upd.add_authors(AUTHORS_SET)
         print("OK")
 
@@ -346,4 +404,3 @@ if __name__ == "__main__":
             upd.add_group(group, sch)
     else:
         print("Abort")
-    

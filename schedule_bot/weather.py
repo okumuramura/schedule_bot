@@ -36,14 +36,16 @@ ICONS = {
     29: ":cloud_with_snow:",
     30: ":hot_face:",
     31: ":cold_face:",
-    32: ":dashing_away:"
+    32: ":dashing_away:",
 }
 
 
 async def get_weather(location: int = 296181) -> Optional[str]:
     async with aiohttp.ClientSession() as session:
         weather_api_url = "http://dataservice.accuweather.com/forecasts/v1/daily/1day/{location}?apikey={key}&language=ru-ru&details=true&metric=true"
-        async with session.get(weather_api_url.format(location = location, key = API_KEY)) as resp:
+        async with session.get(
+            weather_api_url.format(location=location, key=API_KEY)
+        ) as resp:
             if resp.status == 200:
                 weather = await resp.json()
                 try:
@@ -56,22 +58,24 @@ async def get_weather(location: int = 296181) -> Optional[str]:
                     temp_min = temp["Minimum"]["Value"]
                     wind = day["Wind"]
                     wind_speed = wind["Speed"]["Value"]
-                    wind_unit = wind["Speed"]["Unit"]
+                    _ = wind["Speed"]["Unit"]
                     wind_direction = wind["Direction"]["Localized"]
                     wind_speed_formated = float(wind_speed) * 5 / 18
                 except KeyError as err:
                     logging.error(err)
                     return None
 
-
-                result = ("Погода:\n"\
-                    f"{int(temp_max):+}°..{int(temp_min):+}°\n"\
-                    f"{icon} {phrase}\n"\
-                    f"Ветер {wind_direction} {wind_speed_formated:.1f} м/с\n")
+                result = (
+                    "Погода:\n"
+                    f"{int(temp_max):+}°..{int(temp_min):+}°\n"
+                    f"{icon} {phrase}\n"
+                    f"Ветер {wind_direction} {wind_speed_formated:.1f} м/с\n"
+                )
                 return result
             else:
                 logging.warning("weather page status code: " + str(resp.status))
                 return None
+
 
 if __name__ == "__main__":
     result = asyncio.run(get_weather())

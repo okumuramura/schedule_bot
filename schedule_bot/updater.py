@@ -13,28 +13,39 @@ class Updater:
 
     def add_lessons(self, lessons_set):
         new_lessons = []
-        for l in lessons_set:
-            l_id = self.manager.session.query(db.Lesson.id).filter(db.Lesson.name == l).first()
-            if l_id is None:
-                new_lessons.append(db.Lesson(l))
-        
+        for lesson in lessons_set:
+            lesson_id = (
+                self.manager.session.query(db.Lesson.id)
+                .filter(db.Lesson.name == lesson)
+                .first()
+            )
+            if lesson_id is None:
+                new_lessons.append(db.Lesson(lesson))
+
         self.manager.session.add_all(new_lessons)
         self.manager.session.commit()
 
     def add_authors(self, authors_set):
         new_authors = []
-        for a in authors_set:
-            a_id = self.manager.session.query(db.Author.id).filter(db.Author.name == a).first()
-            if a_id is None:
+        for author in authors_set:
+            author_id = (
+                self.manager.session.query(db.Author.id)
+                .filter(db.Author.name == author)
+                .first()
+            )
+            if author_id is None:
                 # a_id = self.manager.add_author(a, commit=False)
-                new_authors.append(db.Author(a))
-                
+                new_authors.append(db.Author(author))
+
         self.manager.session.add_all(new_authors)
         self.manager.session.commit()
 
-
     def add_group(self, group, schedule):
-        g = self.manager.session.query(db.Group.id).filter(db.Group.group == group).first()
+        g = (
+            self.manager.session.query(db.Group.id)
+            .filter(db.Group.group == group)
+            .first()
+        )
         if g is None:
             g = self.manager.add_group(group)
         else:
@@ -47,7 +58,11 @@ class Updater:
         for i, lesson in enumerate(schedule):
             if lesson is None:
                 continue
-            l_id = self.manager.session.query(db.Lesson.id).filter(db.Lesson.name == lesson.name).first()
+            l_id = (
+                self.manager.session.query(db.Lesson.id)
+                .filter(db.Lesson.name == lesson.name)
+                .first()
+            )
             if l_id is None:
                 l_id = self.manager.add_lesson(lesson.name)
             else:
@@ -55,9 +70,13 @@ class Updater:
             weekday = i // 14
             is_overline = i % 2 == 0
             number = i % 14 // 2 + 1
-            
+
             if lesson.author is not None:
-                a_id = self.manager.session.query(db.Author.id).filter(db.Author.name == lesson.author).first()
+                a_id = (
+                    self.manager.session.query(db.Author.id)
+                    .filter(db.Author.name == lesson.author)
+                    .first()
+                )
                 if a_id is None:
                     a_id = self.manager.add_author(lesson.author)
                 else:
@@ -66,7 +85,11 @@ class Updater:
                 a_id = None
 
             if lesson.lesson_type is not None:
-                t_id = self.manager.session.query(db.LessonType.id).filter(db.LessonType.type == lesson.lesson_type).first()
+                t_id = (
+                    self.manager.session.query(db.LessonType.id)
+                    .filter(db.LessonType.type == lesson.lesson_type)
+                    .first()
+                )
                 if t_id is None:
                     print("No lesson type in db: " + lesson.lesson_type)
                 else:
@@ -74,12 +97,16 @@ class Updater:
             else:
                 t_id = None
 
-            self.manager.add_schedule(g, l_id, a_id, t_id, number, weekday, is_overline, lesson.auditory, commit=False)
-        
+            self.manager.add_schedule(
+                g,
+                l_id,
+                a_id,
+                t_id,
+                number,
+                weekday,
+                is_overline,
+                lesson.auditory,
+                commit=False,
+            )
+
         self.manager.session.commit()
-
-            
-
-
-        
-        

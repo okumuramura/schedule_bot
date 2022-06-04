@@ -1,15 +1,14 @@
 import sys
-from typing import List, Optional
+from typing import List
 
 try:
-    from PySide6 import QtCore, QtGui, QtWidgets
+    from PySide6 import QtCore, QtWidgets
 except ImportError:
-    from PySide2 import QtWidgets, QtGui, QtCore
+    from PySide2 import QtWidgets, QtCore
 
 import argparse
 
-import db
-from manager import Manager
+from schedule_bot.manager import Manager
 
 
 class LessonHeader(QtWidgets.QWidget):
@@ -44,10 +43,11 @@ class LessonHeader(QtWidgets.QWidget):
 
         self.setLayout(self.hlayout)
 
+
 class LessonRow(QtWidgets.QWidget):
     removed = QtCore.Signal(int)
 
-    def __init__(self, id, parent = None):
+    def __init__(self, id, parent=None):
         super().__init__()
         self._parent = parent
         self.id = id
@@ -80,7 +80,6 @@ class LessonRow(QtWidgets.QWidget):
         self.hlayout.addWidget(self.remove_btn)
         self.setLayout(self.hlayout)
 
-    
     def is_empty(self) -> bool:
         return not self.lesson.currentText()
 
@@ -93,12 +92,12 @@ class LessonRow(QtWidgets.QWidget):
     def remove(self):
         self.clear()
         self._parent.remove_row(self.id)
-        
+
 
 class LessonTable(QtWidgets.QWidget):
     row_removed = QtCore.Signal(int)
 
-    def __init__(self, data, lesson_quantity = 10):
+    def __init__(self, data, lesson_quantity=10):
         super().__init__()
         self.lessons_quantity = lesson_quantity
 
@@ -112,7 +111,6 @@ class LessonTable(QtWidgets.QWidget):
         self.type_names = [""] + [x.type for x in self.types]
         self.author_names = [""] + [x.name for x in self.authors]
 
-
         self.vlayout = QtWidgets.QVBoxLayout()
         self.lesson_rows = []
         for i in range(self.lessons_quantity):
@@ -123,10 +121,18 @@ class LessonTable(QtWidgets.QWidget):
             self.lesson_rows.append(lesson)
             if i == 0:
                 self.header = LessonHeader()
-                self.header.lesson.setMinimumWidth(lesson.lesson.minimumSizeHint().width())
-                self.header.author.setMinimumWidth(lesson.author.minimumSizeHint().width())
-                self.header.type.setMinimumWidth(lesson.type.minimumSizeHint().width())
-                self.header.auditory.setMinimumWidth(lesson.auditory.minimumWidth())
+                self.header.lesson.setMinimumWidth(
+                    lesson.lesson.minimumSizeHint().width()
+                )
+                self.header.author.setMinimumWidth(
+                    lesson.author.minimumSizeHint().width()
+                )
+                self.header.type.setMinimumWidth(
+                    lesson.type.minimumSizeHint().width()
+                )
+                self.header.auditory.setMinimumWidth(
+                    lesson.auditory.minimumWidth()
+                )
                 self.vlayout.addWidget(self.header)
             self.vlayout.addWidget(lesson)
 
@@ -148,10 +154,10 @@ class LessonTable(QtWidgets.QWidget):
                 row.auditory.setText(sch.classroom)
 
     def update_items(self, data) -> None:
-        self.groups: List[db.Group] = data["groups"]
-        self.lessons: List[db.Lesson] = data["lessons"]
-        self.types: List[db.LessonType] = data["types"]
-        self.authors: List[db.Author] = data["authors"]
+        self.groups: List[database.Group] = data["groups"]
+        self.lessons: List[database.Lesson] = data["lessons"]
+        self.types: List[database.LessonType] = data["types"]
+        self.authors: List[database.Author] = data["authors"]
 
         self.group_names: List[str] = [""] + [x.group for x in self.groups]
         self.lesson_names: List[str] = [""] + [x.name for x in self.lessons]
@@ -173,30 +179,25 @@ class LessonTable(QtWidgets.QWidget):
         self.row_removed.emit(id)
 
 
-
-
-
-
-
 class MainWindow(QtWidgets.QWidget):
     WEEKDAYS = {
-        "Понедельник" : 0,
-        "Вторник" : 1,
-        "Среда" : 2,
-        "Четверг" : 3,
-        "Пятница" : 4,
-        "Суббота" : 5
+        "Понедельник": 0,
+        "Вторник": 1,
+        "Среда": 2,
+        "Четверг": 3,
+        "Пятница": 4,
+        "Суббота": 5,
     }
 
-    def __init__(self, db: str) -> None:
+    def __init__(self, _db: str) -> None:
         super().__init__()
-        self.manager = Manager(db)
+        self.manager = Manager(_db)
         self.prepare_data()
         self.prepare_table()
 
         self.main_layout = QtWidgets.QVBoxLayout()
         self.dialog_layout = QtWidgets.QHBoxLayout()
- 
+
         self.group_dialog = QtWidgets.QInputDialog()
         self.group_dialog.setComboBoxItems(self.group_names)
         self.group_dialog.setComboBoxEditable(True)
@@ -223,7 +224,6 @@ class MainWindow(QtWidgets.QWidget):
         self.save_btn.setMaximumWidth(250)
         self.save_btn.clicked.connect(self.save_input)
 
-        
         self.dialog_layout.addWidget(self.group_dialog)
         self.dialog_layout.addWidget(self.weekday_dialog)
         self.dialog_layout.addWidget(self.on_line)
@@ -237,10 +237,10 @@ class MainWindow(QtWidgets.QWidget):
 
     def prepare_data(self):
         self.data = self.manager.get_data()
-        self.groups : List[db.Group] = self.data["groups"]
-        self.lessons : List[db.Lesson] = self.data["lessons"]
-        self.authors : List[db.Author] = self.data["authors"]
-        self.types : List[db.LessonType] = self.data["types"]
+        self.groups: List[database.Group] = self.data["groups"]
+        self.lessons: List[database.Lesson] = self.data["lessons"]
+        self.authors: List[database.Author] = self.data["authors"]
+        self.types: List[database.LessonType] = self.data["types"]
 
         self.group_names: List[str] = [x.group for x in self.groups]
 
@@ -251,7 +251,6 @@ class MainWindow(QtWidgets.QWidget):
         self.lesson_table.setEnabled(False)
         self.lesson_table.row_removed.connect(self.remove_lesson)
 
-        
     def submit_input(self):
         weekday = self.weekday_dialog.textValue()
         group = self.group_dialog.textValue()
@@ -263,11 +262,13 @@ class MainWindow(QtWidgets.QWidget):
             self.group_dialog.setTextValue(group)
 
         self.lesson_table.setEnabled(True)
-        self.lessons_data = self.manager.get_schedule(group, self.day2int(weekday), self.on_line.isChecked())
+        self.lessons_data = self.manager.get_schedule(
+            group, self.day2int(weekday), self.on_line.isChecked()
+        )
         self.lesson_table.update_data(self.lessons_data)
 
     def save_input(self):
-        row : LessonRow
+        row: LessonRow
         new_data = False
         for row in self.lesson_table.lesson_rows:
             if not row.is_empty():
@@ -292,7 +293,7 @@ class MainWindow(QtWidgets.QWidget):
                 auditory = row.auditory.text()
                 if not auditory:
                     auditory = None
-                
+
                 gstr = self.group_dialog.textValue()
                 gid = self.groups.index(gstr) + 1
 
@@ -305,11 +306,12 @@ class MainWindow(QtWidgets.QWidget):
                     ltype = None
 
                 # self.manager.add_schedule(gid, lid, aid, ltype, num, weekday, is_overline, auditory)
-                id = self.manager.add_or_upd_schedule(gid, lid, aid, ltype, num, weekday, is_overline, auditory)
+                _ = self.manager.add_or_upd_schedule(
+                    gid, lid, aid, ltype, num, weekday, is_overline, auditory
+                )
                 if new_data:
                     self.prepare_data()
                     self.lesson_table.update_items(self.data)
-                
 
     def day2int(self, weekday: str) -> int:
         return self.WEEKDAYS.get(weekday, -1)
@@ -329,14 +331,22 @@ class MainWindow(QtWidgets.QWidget):
 if __name__ == "__main__":
     DEFAULT_DB = "sqlite://lessons.db"
     argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument("-b", "--db", action="store", dest="db", type=str, default=DEFAULT_DB, help="database url (%s by default)" % DEFAULT_DB)
+    argument_parser.add_argument(
+        "-b",
+        "--db",
+        action="store",
+        dest="db",
+        type=str,
+        default=DEFAULT_DB,
+        help="database url (%s by default)" % DEFAULT_DB,
+    )
 
     args = argument_parser.parse_args()
-    db = args.db
+    database = args.db
 
     app = QtWidgets.QApplication([])
 
-    window = MainWindow(db)
+    window = MainWindow(database)
     window.show()
 
     sys.exit(app.exec_())
