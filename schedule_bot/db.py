@@ -1,8 +1,16 @@
 import argparse
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Union
 
-from sqlalchemy import (Boolean, Column, ForeignKey, Integer, MetaData, String,
-                        Table, create_engine)
+from sqlalchemy import (
+    Boolean,
+    Column,
+    ForeignKey,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    create_engine,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
 
@@ -10,6 +18,7 @@ from schedule_bot.times import Times
 
 metadata = MetaData()
 Base = declarative_base()
+
 
 class Weekday:
     MONDAY = 0
@@ -20,24 +29,33 @@ class Weekday:
     SATURDAY = 5
     SUNDAY = 6
 
-groups = Table("groups", metadata,
+
+groups = Table(
+    "groups",
+    metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("group", String(20), nullable=False)
+    Column("group", String(20), nullable=False),
 )
 
-lessons = Table("lessons", metadata,
+lessons = Table(
+    "lessons",
+    metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("name", String(200)),
     Column("type", String(50)),
 )
 
-authors = Table("authors", metadata,
+authors = Table(
+    "authors",
+    metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("name", String(100)),
-    Column("department", String(5))
+    Column("department", String(5)),
 )
 
-schedule = Table("schedule", metadata,
+schedule = Table(
+    "schedule",
+    metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("on_line", Boolean),
     Column("classroom", String(30)),
@@ -47,29 +65,36 @@ schedule = Table("schedule", metadata,
     Column("group_id", Integer, ForeignKey("groups.id")),
     Column("lesson_id", Integer, ForeignKey("lessons.id"), nullable=False),
     Column("author_id", Integer, ForeignKey("authors.id")),
-    Column("lesson_type_id", Integer, ForeignKey("lesson_types.id"))
+    Column("lesson_type_id", Integer, ForeignKey("lesson_types.id")),
 )
 
-lesson_types = Table("lesson_types", metadata,
+lesson_types = Table(
+    "lesson_types",
+    metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("type", String(30))
+    Column("type", String(30)),
 )
 
-active_users = Table("active_users", metadata,
+active_users = Table(
+    "active_users",
+    metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("tid", Integer, unique=True, nullable=False),
     Column("group_id", Integer, ForeignKey("groups.id")),
-    Column("state", Integer, default=0)
+    Column("state", Integer, default=0),
 )
+
 
 class Group(Base):
     __tablename__ = "groups"
 
     id: int = Column(Integer, primary_key=True)
     group: str = Column(String(20), nullable=False)
-    schedules = relationship("Schedule", order_by=schedule.c.id, back_populates="group")
+    schedules = relationship(
+        "Schedule", order_by=schedule.c.id, back_populates="group"
+    )
 
-    def __init__(self, group : str) -> None:
+    def __init__(self, group: str) -> None:
         self.group = group
 
     def __repr__(self) -> str:
@@ -84,6 +109,7 @@ class Group(Base):
         else:
             return False
 
+
 class Author(Base):
     __tablename__ = "authors"
 
@@ -91,7 +117,9 @@ class Author(Base):
     name: str = Column(String(100))
     department: str = Column(String(5))
 
-    schedules = relationship("Schedule", order_by=schedule.c.id, back_populates="author")
+    schedules = relationship(
+        "Schedule", order_by=schedule.c.id, back_populates="author"
+    )
 
     def __init__(self, name: str, department: str = "") -> None:
         self.name = name
@@ -109,6 +137,7 @@ class Author(Base):
     def __str__(self) -> str:
         return self.name
 
+
 class Lesson(Base):
     __tablename__ = "lessons"
 
@@ -117,7 +146,7 @@ class Lesson(Base):
 
     schedules = relationship("Schedule", back_populates="lesson")
 
-    def __init__(self, name : str) -> None:
+    def __init__(self, name: str) -> None:
         self.name = name
 
     def __repr__(self) -> str:
@@ -128,6 +157,7 @@ class Lesson(Base):
             return self.name == other
         else:
             return False
+
 
 class LessonType(Base):
     __tablename__ = "lesson_types"
@@ -147,6 +177,7 @@ class LessonType(Base):
         else:
             return False
 
+
 class Schedule(Base):
     __tablename__ = "schedule"
 
@@ -154,29 +185,30 @@ class Schedule(Base):
     on_line: bool = Column(Boolean)
     classroom: str = Column(String(30))
     corps: int = Column(Integer, nullable=True)
-    weekday: int = Column(Integer) # 0..6
+    weekday: int = Column(Integer)  # 0..6
     num: int = Column(Integer)
     group_id: int = Column(Integer, ForeignKey("groups.id"))
     lesson_id: int = Column(Integer, ForeignKey("lessons.id"), nullable=False)
     author_id: int = Column(Integer, ForeignKey("authors.id"))
     lesson_type_id: int = Column(Integer, ForeignKey("lesson_types.id"))
 
-
     group = relationship("Group", back_populates="schedules")
     lesson = relationship("Lesson", back_populates="schedules")
     author = relationship("Author", back_populates="schedules")
     lesson_type = relationship("LessonType")
 
-
-    def __init__(self, group: Union[Group, int], 
-                        lesson: Union[Lesson, int], 
-                        author: Union[Author, int], 
-                        lesson_type: Union[LessonType, int], 
-                        num: int, 
-                        weekday: int, 
-                        on_line: bool, 
-                        classroom: str, 
-                        corps: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        group: Union[Group, int],
+        lesson: Union[Lesson, int],
+        author: Union[Author, int],
+        lesson_type: Union[LessonType, int],
+        num: int,
+        weekday: int,
+        on_line: bool,
+        classroom: str,
+        corps: Optional[str] = None,
+    ) -> None:
         self.classroom = classroom
         if type(group) == Group:
             self.group = group
@@ -219,6 +251,7 @@ class Schedule(Base):
         classroom = self.classroom if self.classroom else ""
         return f"{self.lesson.name} {ltype} {classroom}"
 
+
 class ActiveUser(Base):
     __tablename__ = "active_users"
 
@@ -240,22 +273,25 @@ class ActiveUser(Base):
         return f"<User {self.tid}{(' [' + self.group.group + ']') if self.group is not None else ''} state: {self.state}>"
 
 
-
 if __name__ == "__main__":
     DEFAULT_DB = "sqlite://lessons.db"
-    
+
     argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument("-i", "--init", 
-        action="store_true", 
-        dest="init", 
-        help = "init database (create tables)"
+    argument_parser.add_argument(
+        "-i",
+        "--init",
+        action="store_true",
+        dest="init",
+        help="init database (create tables)",
     )
-    argument_parser.add_argument("-b", "--db", 
-        action="store", 
-        dest="db", 
-        type = str, 
-        default=DEFAULT_DB, 
-        help = "database URL (%s by default)" % DEFAULT_DB
+    argument_parser.add_argument(
+        "-b",
+        "--db",
+        action="store",
+        dest="db",
+        type=str,
+        default=DEFAULT_DB,
+        help="database URL (%s by default)" % DEFAULT_DB,
     )
 
     args = argument_parser.parse_args()
@@ -264,16 +300,24 @@ if __name__ == "__main__":
 
     if init:
         print("connecting to %s" % db_url)
-        engine = create_engine(db_url, echo = True, encoding="utf-8")
+        engine = create_engine(db_url, echo=True, encoding="utf-8")
         metadata.create_all(engine)
 
         lesson_types_str = [
-            "лек", "практ", "лаб", "лек+практ", "практ+лаб", "лек+лаб", "практ+лек", "лаб+практ", "лаб+лек"
+            "лек",
+            "практ",
+            "лаб",
+            "лек+практ",
+            "практ+лаб",
+            "лек+лаб",
+            "практ+лек",
+            "лаб+практ",
+            "лаб+лек",
         ]
 
-        lesson_types = [LessonType(l) for l in lesson_types_str]
+        lesson_types = [LessonType(lesson_type) for lesson_type in lesson_types_str]
 
-        session = Session(bind = engine)
+        session = Session(bind=engine)
         session.add_all(lesson_types)
         session.commit()
         print("Database initialized!")
