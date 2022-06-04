@@ -8,7 +8,7 @@ import colorama
 import numpy as np
 import xlrd
 
-from updater import Updater
+from schedule_bot.updater import Updater
 
 
 class Lesson:
