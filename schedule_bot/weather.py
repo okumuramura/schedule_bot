@@ -4,7 +4,7 @@ from typing import Optional
 
 import aiohttp
 
-import info
+from schedule_bot import info
 
 API_KEY = info.WEATHER_KEY
 
