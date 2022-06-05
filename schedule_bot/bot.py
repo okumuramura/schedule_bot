@@ -14,7 +14,7 @@ from schedule_bot import info
 from schedule_bot.db import ActiveUser
 from schedule_bot.manager import Manager
 from schedule_bot.schedule import Schedule
-from schedule_bot.times import Times
+from schedule_bot.utils.times import Times
 from schedule_bot.utils import weather
 
 KEY: str = info.KEY  # bot token
