@@ -1,5 +1,5 @@
 # Schedule bot
- Telegram bot and gui interface for make schedules.
+Telegram bot and gui interface for make schedules.
 
 ## Features
 - GUI interface for creating and editing schedules.

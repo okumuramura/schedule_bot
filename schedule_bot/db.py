@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from enum import Enum
 from typing import Any, Optional, Union, List
 
 from sqlalchemy import (
@@ -15,13 +16,13 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
 
-from schedule_bot.times import Times
+from schedule_bot.utils.times import Times
 
 metadata = MetaData()
 Base = declarative_base()
 
 
-class Weekday:
+class Weekday(Enum):
     MONDAY = 0
     TUESDAY = 1
     WEDNESDAY = 2
@@ -50,10 +51,9 @@ class Group(Base):
         return self.group
 
     def __eq__(self, other: Any) -> bool:
-        if type(other) == str:
+        if isinstance(other, str):
             return self.group == other
-        else:
-            return False
+        return False
 
 
 class Author(Base):
@@ -75,10 +75,9 @@ class Author(Base):
         return f"<{self.name} ({self.department})>"
 
     def __eq__(self, other: Any) -> bool:
-        if type(other) == str:
+        if isinstance(other, str):
             return self.name == other
-        else:
-            return False
+        return False
 
     def __str__(self) -> str:
         return self.name
@@ -90,7 +89,9 @@ class Lesson(Base):
     id: int = Column(Integer, primary_key=True)
     name: str = Column(String(150))
 
-    schedules: List[Schedule] = relationship("Schedule", back_populates="lesson")
+    schedules: List[Schedule] = relationship(
+        "Schedule", back_populates="lesson"
+    )
 
     def __init__(self, name: str) -> None:
         self.name = name
@@ -99,10 +100,9 @@ class Lesson(Base):
         return f"<Lesson {self.name}>"
 
     def __eq__(self, other: Any) -> bool:
-        if type(other) == str:
+        if isinstance(other, str):
             return self.name == other
-        else:
-            return False
+        return False
 
 
 class LessonType(Base):
@@ -118,17 +118,16 @@ class LessonType(Base):
         return f"<Type {self.type}>"
 
     def __eq__(self, other: Any) -> bool:
-        if type(other) == str:
+        if isinstance(other, str):
             return self.type == other
-        else:
-            return False
+        return False
 
 
 class Schedule(Base):
     __tablename__ = "schedule"
 
     id: int = Column(Integer, primary_key=True)
-    on_line: bool = Column(Boolean)
+    overline: bool = Column(Boolean)
     classroom: str = Column(String(30))
     corps: int = Column(Integer, nullable=True)
     weekday: int = Column(Integer)  # 0..6
@@ -151,51 +150,51 @@ class Schedule(Base):
         lesson_type: Union[LessonType, int],
         num: int,
         weekday: int,
-        on_line: bool,
+        overline: bool,
         classroom: str,
         corps: Optional[str] = None,
     ) -> None:
         self.classroom = classroom
-        if type(group) == Group:
+        if isinstance(group, Group):
             self.group = group
         else:
             self.group_id = group
 
-        if type(lesson) == Lesson:
+        if isinstance(lesson, Lesson):
             self.lesson = lesson
         else:
             self.lesson_id = lesson
 
-        if type(author) == Author:
+        if isinstance(author, Author):
             self.author = author
         else:
             self.author_id = author
 
-        if type(lesson_type) == LessonType:
+        if isinstance(lesson_type, LessonType):
             self.lesson_type = lesson_type
         else:
             self.lesson_type_id = lesson_type
 
         self.num = num
         self.weekday = weekday
-        self.on_line = on_line
+        self.overline = overline
         self.classroom = classroom
         self.corps = corps
 
     def __repr__(self):
-        return f"<Schedule {'on line' if self.on_line else 'under line'} {self.classroom}>"
+        return f"<Schedule {'on line' if self.overline else 'under line'} {self.classroom}>"
 
     def __str__(self) -> str:
-        ltype = f"({self.lesson_type.type}) " if self.lesson_type else ""
+        lesson_type = f"({self.lesson_type.type}) " if self.lesson_type else ""
         author = f"{self.author.name} " if self.author else ""
         classroom = self.classroom if self.classroom else ""
         lesson_time = Times.lesson_time(self.num)
-        return f"{self.num}. {lesson_time[0]} - {lesson_time[1]}\n{self.lesson.name} {author}{ltype}{classroom}"
+        return f"{self.num}. {lesson_time[0]} - {lesson_time[1]}\n{self.lesson.name} {author}{lesson_type}{classroom}"
 
     def just_name(self) -> str:
-        ltype = f"({self.lesson_type.type})" if self.lesson_type else ""
+        lesson_type = f"({self.lesson_type.type})" if self.lesson_type else ""
         classroom = self.classroom if self.classroom else ""
-        return f"{self.lesson.name} {ltype} {classroom}"
+        return f"{self.lesson.name} {lesson_type} {classroom}"
 
 
 class ActiveUser(Base):
@@ -210,7 +209,7 @@ class ActiveUser(Base):
 
     def __init__(self, tid: int, group: Union[Group, int, None] = None) -> None:
         self.tid = tid
-        if type(group) == Group:
+        if isinstance(group, Group):
             self.group = group
         else:
             self.group_id = group
@@ -261,7 +260,9 @@ if __name__ == "__main__":
             "лаб+лек",
         ]
 
-        lesson_types = [LessonType(lesson_type) for lesson_type in lesson_types_str]
+        lesson_types = [
+            LessonType(lesson_type) for lesson_type in lesson_types_str
+        ]
 
         session = Session(bind=engine)
         session.add_all(lesson_types)

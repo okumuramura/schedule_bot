@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import base64
-import logging
 import shlex
 import textwrap
 from typing import Any
@@ -12,18 +11,17 @@ from aiogram.utils.emoji import emojize
 
 from schedule_bot import info
 from schedule_bot.db import ActiveUser
-from schedule_bot.manager import Manager
+from schedule_bot.manager import manager
 from schedule_bot.schedule import Schedule
 from schedule_bot.utils.times import Times
 from schedule_bot.utils import weather
 
-KEY: str = info.KEY  # bot token
-ADMINS: list = info.ADMINS  # list of telegram ids here
+
+KEY: str = info.KEY
+ADMINS: list = info.ADMINS
 DB_USER: str = info.DB_USER
 DB_PASS: str = info.DB_PASS
 VIP: list = info.VIP
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 class BotState:
@@ -44,7 +42,6 @@ class Keyboard:
         )
         self.IDLE_KEYBOARD.add(types.KeyboardButton(text="Расписание"))
         self.IDLE_KEYBOARD.add(types.KeyboardButton(text="Сейчас"))
-        # self.IDLE_KEYBOARD.add(types.KeyboardButton(text="Где?"))
         self.IDLE_KEYBOARD.add(types.KeyboardButton(text="Выйти"))
 
         self.SCHEDULE_KEYBOARD.row(
@@ -123,7 +120,6 @@ class Keyboard:
 bot = Bot(token=KEY)
 dp = Dispatcher(bot)
 db = f"mysql://{DB_USER}:{DB_PASS}@localhost:3306/schedule?charset=utf8mb4"
-manager = Manager(db)
 schedule = Schedule(manager)
 
 keyboard = Keyboard()

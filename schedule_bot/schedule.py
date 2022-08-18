@@ -1,7 +1,9 @@
+from typing import Tuple, Union, List, Optional
 import datetime
 
-import db
+from schedule_bot import db
 from schedule_bot.utils.times import Times
+from schedule_bot.manager import manager
 
 
 class NowAndNext:
@@ -18,7 +20,7 @@ class NowAndNext:
         self.remain = time_remain
         self.until = time_until
 
-    def __str__(self):
+    def __str__(self) -> str:
         sep = "\n"
         if self.now is not None:
             _now = f"Сейчас:\n{self.now.just_name()}\nзакончится через {self.time_to_str(self.remain)}\n"
@@ -31,7 +33,7 @@ class NowAndNext:
             sep = ""
         return _now + sep + _next
 
-    def time_to_str(self, time: datetime.time):
+    def time_to_str(self, time: datetime.time) -> str:
         hour_str = ["час", "часа", "часов"]
         minut_str = ["минуту", "минуты", "минут"]
         second_str = ["секунду", "секунды", "секунд"]
@@ -52,7 +54,7 @@ class NowAndNext:
             _second = f"{second} {self.num_declination(second, second_str)}"
         return " ".join([_hour, _minute, _second])
 
-    def num_declination(self, num, words):
+    def num_declination(self, num: int, words: Tuple[str]) -> str:
         second_from_end = num % 100 // 10
         first_from_end = num % 10
         if (
@@ -68,35 +70,34 @@ class NowAndNext:
 
 
 class Schedule:
-    def __init__(self, manager):
-        self.manager = manager
+    def __init__(self) -> None:
         self._time_schedule = ""
         for i, (b, e) in enumerate(zip(Times.lesson_begins, Times.lesson_ends)):
             self._time_schedule += (
                 f"{i+1}. {b.strftime('%H:%M')} - {e.strftime('%H:%M')}\n"
             )
 
-    def date(self, add=0):
+    def date(self, add: int = 0) -> Tuple[int, int]:
         if add == 0:
             week, weekday = datetime.datetime.now().isocalendar()[1:]
         else:
             week, weekday = (
-                datetime.datetime.now() + datetime.timedelta(days=1)
+                datetime.datetime.now() + datetime.timedelta(days=add)
             ).isocalendar()[1:]
         return week, weekday
 
-    def now(self, group):
+    def now(self, group: Union[str, db.Group]) -> NowAndNext:
         week, weekday = datetime.datetime.now().isocalendar()[1:]
         now_time = datetime.datetime.now().time()
-        # weekday = 2
-        # now_time = datetime.time(8, 40, 23)
         cur_lesson = -1
-        for i, (b, e) in enumerate(zip(Times.lesson_begins, Times.lesson_ends)):
-            if now_time <= e:
-                cur_lesson = i + 1
+        for lesson_num, (begin_time, end_time) in enumerate(
+            zip(Times.lesson_begins, Times.lesson_ends)
+        ):
+            if now_time <= end_time:
+                cur_lesson = lesson_num + 1
                 break
-        now_lesson, next_lesson = self.manager.get_lesson_by_num(
-            group, weekday - 1, self.is_overline(week), cur_lesson, next=True
+        now_lesson, next_lesson = manager.get_lesson_with_next(
+            group, weekday - 1, self.is_overline(week), cur_lesson
         )
         if (
             not (
@@ -125,9 +126,9 @@ class Schedule:
 
         return now_next
 
-    def today(self, group):
+    def today(self, group: Union[str, db.Group]) -> List[str]:
         week, weekday = datetime.datetime.now().isocalendar()[1:]
-        schedule = self.manager.get_schedule(
+        schedule = manager.get_schedule(
             group, weekday - 1, self.is_overline(week)
         )
         str_schedule = []
@@ -136,11 +137,11 @@ class Schedule:
 
         return str_schedule
 
-    def tomorrow(self, group):
+    def tomorrow(self, group: Union[str, db.Group]) -> List[str]:
         week, weekday = (
             datetime.datetime.now() + datetime.timedelta(days=1)
         ).isocalendar()[1:]
-        schedule = self.manager.get_schedule(
+        schedule = manager.get_schedule(
             group, weekday - 1, self.is_overline(week)
         )
         str_schedule = []
@@ -149,25 +150,23 @@ class Schedule:
 
         return str_schedule
 
-    def day_schedule(self, group, day, is_overline):
-        schedule = self.manager.get_schedule(group, day, is_overline)
+    def day_schedule(self, group: Union[str, db.Group], day: int, is_overline: bool) -> List[str]:
+        schedule = manager.get_schedule(group, day, is_overline)
         str_schedule = []
         for sch in schedule:
             str_schedule.append(str(sch[0]))
 
         return str_schedule
 
-    def time_schedule(self):
+    def time_schedule(self) -> str:
         return self._time_schedule
 
-    def is_overline(self, week=None, add=0):
+    def is_overline(self, week: Optional[int] = None, add: int = 0) -> bool:
         if week is None:
             return True if self.date(add=add)[0] % 2 != 0 else False
-        else:
-            return not week % 2 == 0
+        return not week % 2 == 0
 
-    def time_delta(self, stime: datetime.time, etime: datetime.time):
-        print(stime, etime)
+    def time_delta(self, stime: datetime.time, etime: datetime.time) -> datetime.datetime:
         d1 = datetime.timedelta(
             hours=stime.hour, minutes=stime.minute, seconds=stime.second
         )

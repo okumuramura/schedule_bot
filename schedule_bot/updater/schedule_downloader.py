@@ -6,6 +6,8 @@ import aiohttp
 import requests
 from bs4 import BeautifulSoup
 
+from schedule_bot.updater import logger
+
 
 def download(dest="./"):
     os.makedirs(dest, exist_ok=True)
@@ -21,6 +23,8 @@ def download(dest="./"):
         for href in hrefs:
             link = href["href"]
             links.append(main_page + link)
+
+        logger.info('Fetch %d files. Downloading...', len(links))
         filenames = list(map(lambda l: l.split("/")[-1], links))
 
         if os.name == "nt":
@@ -31,6 +35,7 @@ def download(dest="./"):
         sem = asyncio.Semaphore(4)
 
         async def download_file(link, name, dest=dest):
+            logger.info('Downloading %s as %s', link, name)
             async with sem, aiohttp.ClientSession() as session:
                 async with session.get(link) as source:
                     data = await source.read()
@@ -45,6 +50,7 @@ def download(dest="./"):
         ]
         loop.run_until_complete(asyncio.wait(tasks))
         loop.close()
+        logger.info('Finished')
         return list(map(lambda name: path.join(dest, name), filenames))
     return False
 

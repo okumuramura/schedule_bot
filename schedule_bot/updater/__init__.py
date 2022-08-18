@@ -1,53 +1,63 @@
 import db
-from manager import Manager
+import logging
+
+from sqlalchemy.orm import Session
+
+from schedule_bot.manager import manager, orm_function
+
+
+__log_format = r'[%(levelname)s] %(message)s'
+
+logger = logging.Logger(__name__, logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+handler.setFormatter(logging.Formatter(__log_format))
+logger.addHandler(handler)
 
 
 class Updater:
-    def __init__(self, db: str):
-        self.manager = Manager(db)
+    @orm_function
+    def clear_schedule(self, session: Session = None) -> None:
+        session.query(db.Schedule).delete()
+        # manager.session.execute(r"TRUNCATE TABLE `schedule`")
+        session.commit()
 
-    def clear_schedule(self):
-        self.manager.session.query(db.Schedule).delete()
-        # self.manager.session.execute(r"TRUNCATE TABLE `schedule`")
-        self.manager.session.commit()
-
-    def add_lessons(self, lessons_set):
+    @orm_function
+    def add_lessons(self, lessons_set, session: Session = None) -> None:
         new_lessons = []
         for lesson in lessons_set:
             lesson_id = (
-                self.manager.session.query(db.Lesson.id)
+                session.query(db.Lesson.id)
                 .filter(db.Lesson.name == lesson)
                 .first()
             )
             if lesson_id is None:
                 new_lessons.append(db.Lesson(lesson))
 
-        self.manager.session.add_all(new_lessons)
-        self.manager.session.commit()
+        session.add_all(new_lessons)
+        session.commit()
 
-    def add_authors(self, authors_set):
+    @orm_function
+    def add_authors(self, authors_set, session: Session = None) -> None:
         new_authors = []
         for author in authors_set:
             author_id = (
-                self.manager.session.query(db.Author.id)
+                session.query(db.Author.id)
                 .filter(db.Author.name == author)
                 .first()
             )
             if author_id is None:
-                # a_id = self.manager.add_author(a, commit=False)
+                # a_id = manager.add_author(a, commit=False)
                 new_authors.append(db.Author(author))
 
-        self.manager.session.add_all(new_authors)
-        self.manager.session.commit()
+        session.add_all(new_authors)
+        session.commit()
 
-    def add_group(self, group, schedule):
-        g = (
-            self.manager.session.query(db.Group.id)
-            .filter(db.Group.group == group)
-            .first()
-        )
+    @orm_function
+    def add_group(self, group, schedule, session: Session = None) -> None:
+        g = session.query(db.Group.id).filter(db.Group.group == group).first()
         if g is None:
-            g = self.manager.add_group(group)
+            g = manager.add_group(group, session=session)
         else:
             g = g[0]
 
@@ -59,12 +69,12 @@ class Updater:
             if lesson is None:
                 continue
             l_id = (
-                self.manager.session.query(db.Lesson.id)
+                session.query(db.Lesson.id)
                 .filter(db.Lesson.name == lesson.name)
                 .first()
             )
             if l_id is None:
-                l_id = self.manager.add_lesson(lesson.name)
+                l_id = manager.add_lesson(lesson.name, session=session)
             else:
                 l_id = l_id[0]
             weekday = i // 14
@@ -73,12 +83,12 @@ class Updater:
 
             if lesson.author is not None:
                 a_id = (
-                    self.manager.session.query(db.Author.id)
+                    session.query(db.Author.id)
                     .filter(db.Author.name == lesson.author)
                     .first()
                 )
                 if a_id is None:
-                    a_id = self.manager.add_author(lesson.author)
+                    a_id = manager.add_author(lesson.author, session=session)
                 else:
                     a_id = a_id[0]
             else:
@@ -86,7 +96,7 @@ class Updater:
 
             if lesson.lesson_type is not None:
                 t_id = (
-                    self.manager.session.query(db.LessonType.id)
+                    session.query(db.LessonType.id)
                     .filter(db.LessonType.type == lesson.lesson_type)
                     .first()
                 )
@@ -97,7 +107,7 @@ class Updater:
             else:
                 t_id = None
 
-            self.manager.add_schedule(
+            manager.add_schedule(
                 g,
                 l_id,
                 a_id,
@@ -107,6 +117,7 @@ class Updater:
                 is_overline,
                 lesson.auditory,
                 commit=False,
+                session=session,
             )
 
-        self.manager.session.commit()
+        session.commit()

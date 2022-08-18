@@ -1,0 +1,12 @@
+[bot]
+key = ""
+admins = []
+
+[database]
+url = ""
+user = ""
+password = ""
+
+[tools]
+    [tools.weather]
+    key = ""

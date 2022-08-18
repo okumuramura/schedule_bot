@@ -10,7 +10,6 @@ def orm_function(func: Callable[..., Any]):  # type: ignore
         if kwargs.get('session') is None:
             with SessionCreator() as session:
                 return func(*args, session=session, **kwargs)
-        else:
-            return func(*args, **kwargs)
+        return func(*args, **kwargs)
 
     return wrapper

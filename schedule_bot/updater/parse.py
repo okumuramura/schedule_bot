@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import argparse
 import logging
 import os
 import re
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Union, Any
 
 import colorama
 import numpy as np
@@ -42,14 +44,16 @@ class Lesson:
             self.name is not None and self.name == "Физическая культура и спорт"
         )
 
-    def __eq__(self, o) -> bool:
-        return (
-            type(o) == type(self)
-            and self.name == o.name
-            and self.author == o.author
-            and self.auditory == o.auditory
-            and self.lesson_type == o.lesson_type
-            and self.department == o.department
+    def __eq__(self, other: Union[Lesson, Any]) -> bool:
+        return all(
+            (
+                isinstance(other, Lesson),
+                self.name == other.name,
+                self.author == other.author,
+                self.auditory == other.auditory,
+                self.lesson_type == other.lesson_type,
+                self.department == other.department,
+            )
         )
 
     def __str__(self) -> str:
@@ -69,7 +73,7 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
                 return s, start_pos
             return s
 
-        names = re.findall(r"\w+", s)
+        names: List[str] = re.findall(r"\w+", s)
         if len(names) > 3:
             if sp:
                 start_pos += len(" ".join(names)) - len(" ".join(names[-3:]))
@@ -360,29 +364,38 @@ if __name__ == "__main__":
     for file in os.listdir(filedir):
         ext = file.split(".")[-1]
         if ext == "xls":
-            logging.debug(f"added {file}")
+            logging.debug("Added %s", file)
             FILES.append(os.path.join(filedir, file))
         else:
-            logging.debug(f"skiped {file}")
+            logging.debug("Skiped %s", file)
 
     if PROGRESS:
         FILES = tqdm(FILES, position=0, leave=True, desc="files")
 
     for table in FILES:
-        logging.debug("parsing file: " + table)
+        logging.debug("Parsing file: %s", table)
         sheets = parse_table(table)
         for sheet_name, sheet in sheets.items():
-            logging.debug("   SHEET: " + sheet_name)
+            logging.debug("   SHEET: %s", sheet_name)
             group_schedule = parse_sheet(sheet)
             lessons.update(group_schedule)
 
-    print(f"Total: {TOTAL}")
-    print(
-        f"{colorama.Fore.YELLOW}Incomplete: {INCOMPLETE}{colorama.Fore.RESET}"
+    logging.info('Total: %d', TOTAL)
+    logging.info(
+        "%sIncomplete: %d%s",
+        colorama.Fore.YELLOW,
+        INCOMPLETE,
+        colorama.Fore.RESET,
     )
-    print(f"{colorama.Fore.GREEN}Passed: {PASSED}{colorama.Fore.RESET}")
-    print(f"{colorama.Fore.RED}Unnamed: {UNNAMED}{colorama.Fore.RESET}")
-    print(f"{colorama.Fore.RED}Errors: {ERRORS}{colorama.Fore.RESET}")
+    logging.info(
+        "%sPassed: %d%s", colorama.Fore.GREEN, PASSED, colorama.Fore.RESET
+    )
+    logging.info(
+        "%sUnnamed: %d%s", colorama.Fore.RED, UNNAMED, colorama.Fore.RESET
+    )
+    logging.info(
+        "%sErrors: %d%s", colorama.Fore.RED, ERRORS, colorama.Fore.RESET
+    )
 
     is_updating: str = input("Put data into database (%s)? [y/n]: " % db_url)
     if is_updating.lower() == "y":

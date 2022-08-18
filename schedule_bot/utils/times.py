@@ -64,7 +64,9 @@ class Times:
         return Times.weekdays[(datetime.datetime.today().weekday() + 1) % 7]
 
     @staticmethod
-    def today_month(case: Literal['nominative', 'genitive'] = 'nominative') -> str:
+    def today_month(
+        case: Literal['nominative', 'genitive'] = 'nominative'
+    ) -> str:
         allowed_cases = ['nominative', 'genitive']
         if case in allowed_cases:
             return Times.months[(datetime.datetime.today().month - 1)].get(case)

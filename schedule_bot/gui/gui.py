@@ -8,7 +8,7 @@ except ImportError:
 
 import argparse
 
-from schedule_bot.manager import Manager
+from schedule_bot.manager import manager
 
 
 class LessonHeader(QtWidgets.QWidget):
@@ -191,7 +191,6 @@ class MainWindow(QtWidgets.QWidget):
 
     def __init__(self, _db: str) -> None:
         super().__init__()
-        self.manager = Manager(_db)
         self.prepare_data()
         self.prepare_table()
 
@@ -236,7 +235,7 @@ class MainWindow(QtWidgets.QWidget):
         self.setLayout(self.main_layout)
 
     def prepare_data(self):
-        self.data = self.manager.get_data()
+        self.data = manager.get_data()
         self.groups: List[database.Group] = self.data["groups"]
         self.lessons: List[database.Lesson] = self.data["lessons"]
         self.authors: List[database.Author] = self.data["authors"]
@@ -255,14 +254,14 @@ class MainWindow(QtWidgets.QWidget):
         weekday = self.weekday_dialog.textValue()
         group = self.group_dialog.textValue()
         if group not in self.groups:
-            self.manager.add_group(group)
-            self.groups = self.manager.get_groups()
+            manager.add_group(group)
+            self.groups = manager.get_groups()
             self.group_names.append(group)
             self.group_dialog.setComboBoxItems(self.group_names)
             self.group_dialog.setTextValue(group)
 
         self.lesson_table.setEnabled(True)
-        self.lessons_data = self.manager.get_schedule(
+        self.lessons_data = manager.get_schedule(
             group, self.day2int(weekday), self.on_line.isChecked()
         )
         self.lesson_table.update_data(self.lessons_data)
@@ -278,7 +277,7 @@ class MainWindow(QtWidgets.QWidget):
                 if lstr in self.lessons:
                     lid = self.lessons.index(lstr) + 1
                 else:
-                    lid = self.manager.add_lesson(lstr)
+                    lid = manager.add_lesson(lstr)
                     new_data = True
 
                 astr = row.author.currentText()
@@ -287,7 +286,7 @@ class MainWindow(QtWidgets.QWidget):
                 elif astr in self.authors:
                     aid = self.authors.index(astr) + 1
                 else:
-                    aid = self.manager.add_author(astr)
+                    aid = manager.add_author(astr)
                     new_data = True
 
                 auditory = row.auditory.text()
@@ -305,8 +304,8 @@ class MainWindow(QtWidgets.QWidget):
                 else:
                     ltype = None
 
-                # self.manager.add_schedule(gid, lid, aid, ltype, num, weekday, is_overline, auditory)
-                _ = self.manager.add_or_upd_schedule(
+                # manager.add_schedule(gid, lid, aid, ltype, num, weekday, is_overline, auditory)
+                _ = manager.add_or_upd_schedule(
                     gid, lid, aid, ltype, num, weekday, is_overline, auditory
                 )
                 if new_data:
@@ -325,7 +324,7 @@ class MainWindow(QtWidgets.QWidget):
 
         weekday = self.day2int(self.weekday_dialog.textValue())
 
-        self.manager.delete_schedule(gid, weekday, is_overline, id)
+        manager.delete_schedule(gid, weekday, is_overline, id)
 
 
 if __name__ == "__main__":
