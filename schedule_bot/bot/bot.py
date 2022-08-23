@@ -3,25 +3,25 @@ import asyncio
 import base64
 import shlex
 import textwrap
-from typing import Any
+from typing import Any, List, NoReturn
 
 import aioschedule
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.utils.emoji import emojize
 
 from schedule_bot import info
+from schedule_bot.bot import config
 from schedule_bot.db import ActiveUser
 from schedule_bot.manager import manager
 from schedule_bot.schedule import Schedule
-from schedule_bot.utils.times import Times
 from schedule_bot.utils import weather
+from schedule_bot.utils.times import Times
 
-
-KEY: str = info.KEY
-ADMINS: list = info.ADMINS
+KEY: str = config['bot']['key']
+ADMINS: List[int] = info.ADMINS
 DB_USER: str = info.DB_USER
 DB_PASS: str = info.DB_PASS
-VIP: list = info.VIP
+VIP: List[int] = info.VIP
 
 
 class BotState:
@@ -30,7 +30,7 @@ class BotState:
 
 
 class Keyboard:
-    def __init__(self):
+    def __init__(self) -> None:
         self.IDLE_KEYBOARD = types.ReplyKeyboardMarkup(resize_keyboard=True)
         self.SCHEDULE_KEYBOARD = types.InlineKeyboardMarkup(row_width=2)
         self.BACK_KEYBOARD = types.InlineKeyboardMarkup(row_width=1)
@@ -119,14 +119,14 @@ class Keyboard:
 
 bot = Bot(token=KEY)
 dp = Dispatcher(bot)
-db = f"mysql://{DB_USER}:{DB_PASS}@localhost:3306/schedule?charset=utf8mb4"
-schedule = Schedule(manager)
+# db = f"mysql://{DB_USER}:{DB_PASS}@localhost:3306/schedule?charset=utf8mb4"
+schedule = Schedule()
 
 keyboard = Keyboard()
 
 
 class NoExitParser(argparse.ArgumentParser):
-    def error(self, error_msg):
+    def error(self, error_msg: str) -> NoReturn:
         args = {'prog': self.prog, 'message': error_msg}
         raise Exception(('error: %(message)s\n') % args)
 
@@ -144,7 +144,7 @@ mailing_parser.add_argument(
 mailing_parser.add_argument("-m", "--message", action="store", type=str)
 
 
-async def morning_greeting():
+async def morning_greeting() -> None:
     message_template = textwrap.dedent(
         """\
     Доброе утро! Сегодня {date}, {weekday}.
@@ -183,7 +183,7 @@ async def morning_greeting():
                 )
 
 
-async def add_user_critical(user_id: int):
+async def add_user_critical(user_id: int) -> None:
     manager.add_user(user_id)
     await bot.send_message(
         user_id,
@@ -191,7 +191,7 @@ async def add_user_critical(user_id: int):
     )
 
 
-async def not_logged_in_yet(user_id: int):
+async def not_logged_in_yet(user_id: int) -> None:
     await bot.send_message(
         user_id,
         "Вы ещё не указали свою группу!",
@@ -200,12 +200,12 @@ async def not_logged_in_yet(user_id: int):
 
 
 @dp.message_handler(commands=["help"])
-async def help_handler(msg: types.Message):
+async def help_handler(msg: types.Message) -> None:
     await bot.send_message(msg.from_user.id, "Nothing here yet")
 
 
 @dp.message_handler(commands=["start"])
-async def start_handler(msg: types.Message):
+async def start_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     data = manager.get_user(user_id)
     args = msg.get_args()
@@ -243,7 +243,7 @@ async def start_handler(msg: types.Message):
 
 
 @dp.message_handler(commands=["invite"])
-async def invite_handler(msg: types.Message):
+async def invite_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user_info: ActiveUser
     data = manager.get_user(user_id)
@@ -266,7 +266,7 @@ async def invite_handler(msg: types.Message):
 
 @dp.message_handler(commands=["today"])
 @dp.message_handler(lambda msg: msg.text.lower() == "сегодня")
-async def today_handler(msg: types.Message):
+async def today_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user_info: ActiveUser
     data = manager.get_user(user_id)
@@ -295,7 +295,7 @@ async def today_handler(msg: types.Message):
 
 @dp.message_handler(commands=["tomorrow"])
 @dp.message_handler(lambda msg: msg.text.lower() == "завтра")
-async def tomorrow_handler(msg: types.Message):
+async def tomorrow_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user_info: ActiveUser
     data = manager.get_user(user_id)
@@ -324,7 +324,7 @@ async def tomorrow_handler(msg: types.Message):
 
 @dp.message_handler(commands=["now"])
 @dp.message_handler(lambda msg: msg.text.lower() == "сейчас")
-async def now_handler(msg: types.Message):
+async def now_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user_info: ActiveUser
     data = manager.get_user(user_id)
@@ -343,7 +343,7 @@ async def now_handler(msg: types.Message):
 
 @dp.message_handler(commands=["schedule"])
 @dp.message_handler(lambda msg: msg.text.lower() == "расписание")
-async def schedule_handler(msg: types.Message):
+async def schedule_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user_info: ActiveUser
     data = manager.get_user(user_id)
@@ -362,7 +362,7 @@ async def schedule_handler(msg: types.Message):
 
 
 @dp.message_handler(commands=["week"])
-async def week_handler(msg: types.Message):
+async def week_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     await bot.send_message(
         user_id,
@@ -371,14 +371,14 @@ async def week_handler(msg: types.Message):
 
 
 @dp.message_handler(commands=["times"])
-async def times_handler(msg: types.Message):
+async def times_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     await bot.send_message(user_id, schedule.time_schedule())
 
 
 @dp.message_handler(commands=["logout"])
 @dp.message_handler(lambda msg: msg.text.lower() == "выйти")
-async def quit_handler(msg: types.Message):
+async def quit_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     manager.logout_user(user_id)
     await bot.send_message(
@@ -390,7 +390,7 @@ async def quit_handler(msg: types.Message):
 
 # TODO make the newsletter more flexible
 @dp.message_handler(lambda msg: msg.text.lower().startswith("рассылка:"))
-async def masssend_handler(msg: types.Message):
+async def masssend_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     if user_id in ADMINS:
         text = msg.text[10:]
@@ -403,7 +403,7 @@ async def masssend_handler(msg: types.Message):
 
 
 @dp.message_handler(commands=["mailing"])  # v2
-async def mailing_handler(msg: types.Message):
+async def mailing_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     if user_id in ADMINS:
         message_args = msg.get_args()
@@ -441,7 +441,7 @@ async def mailing_handler(msg: types.Message):
 
 
 @dp.message_handler()
-async def message_handler(msg: types.Message):
+async def message_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     state = manager.get_user_state(user_id)
     if state == BotState.REGISTER:
@@ -463,7 +463,7 @@ async def message_handler(msg: types.Message):
 
 
 @dp.callback_query_handler(lambda c: c.data == "back")
-async def inline_back(callback: types.CallbackQuery):
+async def inline_back(callback: types.CallbackQuery) -> None:
     await bot.answer_callback_query(callback.id)
     await bot.edit_message_text(
         "Какое расписание вам нужно?",
@@ -474,7 +474,7 @@ async def inline_back(callback: types.CallbackQuery):
 
 
 @dp.callback_query_handler(lambda c: c.data == "grouplist")
-async def inline_group_list(callback: types.CallbackQuery):
+async def inline_group_list(callback: types.CallbackQuery) -> None:
     user_id = callback.from_user.id
     await bot.answer_callback_query(callback.id)
     groups = manager.get_groups()
@@ -486,7 +486,7 @@ async def inline_group_list(callback: types.CallbackQuery):
 
 
 @dp.callback_query_handler()
-async def process_schedule(callback: types.CallbackQuery):
+async def process_schedule(callback: types.CallbackQuery) -> None:
     await bot.answer_callback_query(callback.id)
     day, line = int(callback.data[0]), int(callback.data[1])
     user_id = callback.from_user.id
@@ -541,14 +541,14 @@ async def process_schedule(callback: types.CallbackQuery):
                 )
 
 
-async def morning_scheduler():
+async def morning_scheduler() -> None:
     aioschedule.every().day.at("8:00").do(morning_greeting)
     while True:
         await aioschedule.run_pending()
         await asyncio.sleep(10)
 
 
-async def setup(_: Any):
+async def setup(_: Any) -> None:
     asyncio.create_task(morning_scheduler())
 
 

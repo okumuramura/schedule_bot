@@ -1,13 +1,11 @@
 import logging
 import logging.config
-import toml
 
+import toml
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-logging.config.fileConfig(
-    './scedule_bot/logger.conf', disable_existing_loggers=False
-)
+logging.config.fileConfig('./logger.conf', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 engine = create_engine('sqlite:///lessons.db')

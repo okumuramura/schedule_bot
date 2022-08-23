@@ -1,5 +1,5 @@
-from typing import Tuple, Literal
 import datetime
+from typing import Literal, Optional, Tuple
 
 
 class Times:
@@ -66,14 +66,12 @@ class Times:
     @staticmethod
     def today_month(
         case: Literal['nominative', 'genitive'] = 'nominative'
-    ) -> str:
+    ) -> Optional[str]:
         allowed_cases = ['nominative', 'genitive']
         if case in allowed_cases:
             return Times.months[(datetime.datetime.today().month - 1)].get(case)
-        else:
-            assert KeyError(
-                f'Wrong case!, allowed: {", ".join(allowed_cases)}.'
-            )
+        assert KeyError(f'Wrong case!, allowed: {", ".join(allowed_cases)}.')
+        return None
 
     @staticmethod
     def today_date() -> str:

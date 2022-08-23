@@ -1,9 +1,9 @@
-from typing import Tuple, Union, List, Optional
 import datetime
+from typing import List, Optional, Tuple, Union
 
 from schedule_bot import db
-from schedule_bot.utils.times import Times
 from schedule_bot.manager import manager
+from schedule_bot.utils.times import Times
 
 
 class NowAndNext:
@@ -14,7 +14,6 @@ class NowAndNext:
         time_remain: datetime.time,
         time_until: datetime.time,
     ):
-
         self.now = now_lesson
         self.next = next_lesson
         self.remain = time_remain
@@ -72,9 +71,9 @@ class NowAndNext:
 class Schedule:
     def __init__(self) -> None:
         self._time_schedule = ""
-        for i, (b, e) in enumerate(zip(Times.lesson_begins, Times.lesson_ends)):
+        for lesson_num, (begin, end) in enumerate(zip(Times.lesson_begins, Times.lesson_ends), start=1):
             self._time_schedule += (
-                f"{i+1}. {b.strftime('%H:%M')} - {e.strftime('%H:%M')}\n"
+                f"{lesson_num}. {begin.strftime('%H:%M')} - {end.strftime('%H:%M')}\n"
             )
 
     def date(self, add: int = 0) -> Tuple[int, int]:
@@ -90,7 +89,7 @@ class Schedule:
         week, weekday = datetime.datetime.now().isocalendar()[1:]
         now_time = datetime.datetime.now().time()
         cur_lesson = -1
-        for lesson_num, (begin_time, end_time) in enumerate(
+        for lesson_num, (_, end_time) in enumerate(
             zip(Times.lesson_begins, Times.lesson_ends)
         ):
             if now_time <= end_time:
@@ -150,7 +149,9 @@ class Schedule:
 
         return str_schedule
 
-    def day_schedule(self, group: Union[str, db.Group], day: int, is_overline: bool) -> List[str]:
+    def day_schedule(
+        self, group: Union[str, db.Group], day: int, is_overline: bool
+    ) -> List[str]:
         schedule = manager.get_schedule(group, day, is_overline)
         str_schedule = []
         for sch in schedule:
@@ -166,11 +167,13 @@ class Schedule:
             return True if self.date(add=add)[0] % 2 != 0 else False
         return not week % 2 == 0
 
-    def time_delta(self, stime: datetime.time, etime: datetime.time) -> datetime.datetime:
-        d1 = datetime.timedelta(
+    def time_delta(
+        self, stime: datetime.time, etime: datetime.time
+    ) -> datetime.datetime:
+        delta_1 = datetime.timedelta(
             hours=stime.hour, minutes=stime.minute, seconds=stime.second
         )
-        d2 = datetime.timedelta(
+        delta_2 = datetime.timedelta(
             hours=etime.hour, minutes=etime.minute, seconds=etime.second
         )
-        return (datetime.datetime.min + (d1 - d2)).time()
+        return (datetime.datetime.min + (delta_1 - delta_2)).time()

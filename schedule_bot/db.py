@@ -1,25 +1,13 @@
 from __future__ import annotations
 
-import argparse
 from enum import Enum
-from typing import Any, Optional, Union, List
+from typing import Any, List, Optional, Union
 
-from sqlalchemy import (
-    Boolean,
-    Column,
-    ForeignKey,
-    Integer,
-    MetaData,
-    String,
-    create_engine,
-)
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, relationship
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 
+from schedule_bot import Base, engine, logger
 from schedule_bot.utils.times import Times
-
-metadata = MetaData()
-Base = declarative_base()
 
 
 class Weekday(Enum):
@@ -38,7 +26,7 @@ class Group(Base):
     id: int = Column(Integer, primary_key=True)
     group: str = Column(String(20), nullable=False)
     schedules: List[Schedule] = relationship(
-        "Schedule", order_by='schedule.id', back_populates="group"
+        "Schedule", back_populates="group"
     )
 
     def __init__(self, group: str) -> None:
@@ -64,7 +52,7 @@ class Author(Base):
     department: str = Column(String(5))
 
     schedules: List[Schedule] = relationship(
-        "Schedule", order_by='schedule.id', back_populates="author"
+        "Schedule", back_populates="author"
     )
 
     def __init__(self, name: str, department: str = "") -> None:
@@ -129,7 +117,7 @@ class Schedule(Base):
     id: int = Column(Integer, primary_key=True)
     overline: bool = Column(Boolean)
     classroom: str = Column(String(30))
-    corps: int = Column(Integer, nullable=True)
+    corps: Optional[str] = Column(String(20), nullable=True)
     weekday: int = Column(Integer)  # 0..6
     num: int = Column(Integer)
     group_id: int = Column(Integer, ForeignKey("groups.id"))
@@ -181,7 +169,7 @@ class Schedule(Base):
         self.classroom = classroom
         self.corps = corps
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Schedule {'on line' if self.overline else 'under line'} {self.classroom}>"
 
     def __str__(self) -> str:
@@ -218,53 +206,6 @@ class ActiveUser(Base):
         return f"<User {self.tid}{(' [' + self.group.group + ']') if self.group is not None else ''} state: {self.state}>"
 
 
-if __name__ == "__main__":
-    DEFAULT_DB = "sqlite://lessons.db"
-
-    argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument(
-        "-i",
-        "--init",
-        action="store_true",
-        dest="init",
-        help="init database (create tables)",
-    )
-    argument_parser.add_argument(
-        "-b",
-        "--db",
-        action="store",
-        dest="db",
-        type=str,
-        default=DEFAULT_DB,
-        help="database URL (%s by default)" % DEFAULT_DB,
-    )
-
-    args = argument_parser.parse_args()
-    db_url = args.db
-    init = args.init
-
-    if init:
-        print("connecting to %s" % db_url)
-        engine = create_engine(db_url, echo=True, encoding="utf-8")
-        metadata.create_all(engine)
-
-        lesson_types_str = [
-            "лек",
-            "практ",
-            "лаб",
-            "лек+практ",
-            "практ+лаб",
-            "лек+лаб",
-            "практ+лек",
-            "лаб+практ",
-            "лаб+лек",
-        ]
-
-        lesson_types = [
-            LessonType(lesson_type) for lesson_type in lesson_types_str
-        ]
-
-        session = Session(bind=engine)
-        session.add_all(lesson_types)
-        session.commit()
-        print("Database initialized!")
+if __name__ == '__main__':
+    Base.metadata.create_all(engine)
+    logger.info('Database was initialized.')

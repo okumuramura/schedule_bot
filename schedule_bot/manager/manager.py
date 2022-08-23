@@ -1,4 +1,4 @@
-from typing import List, Union, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from sqlalchemy.orm import Session
 
@@ -6,7 +6,7 @@ from schedule_bot import db
 from schedule_bot.manager import orm_function
 
 
-@orm_function()
+@orm_function
 def get_groups(session: Session = None) -> List[db.Group]:
     return session.query(db.Group).all()
 
@@ -78,7 +78,7 @@ def get_lesson_with_next(
     weekday: int,
     overline: bool,
     num: int,
-    session: Session = None
+    session: Session = None,
 ) -> Tuple[Optional[db.Schedule], Optional[db.Schedule]]:
     lesson = get_lesson_by_num(group, weekday, overline, num, session=session)
     next_lesson = (
@@ -209,10 +209,10 @@ def add_authors(
 
 @orm_function
 def add_schedule(
-    group: Union[str, db.Group],
-    lesson: Union[str, db.Lesson],
-    author: Union[str, db.Author],
-    lesson_type: Union[str, db.LessonType],
+    group: Union[int, db.Group],
+    lesson: Union[int, db.Lesson],
+    author: Union[int, db.Author],
+    lesson_type: Union[int, db.LessonType],
     num: int,
     weekday: int,
     is_overline: bool,
