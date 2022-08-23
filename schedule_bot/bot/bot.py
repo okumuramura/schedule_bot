@@ -1,9 +1,9 @@
-import argparse
 import asyncio
 import base64
 import shlex
 import textwrap
-from typing import Any, List, NoReturn
+from typing import Any, List
+from enum import Enum
 
 import aioschedule
 from aiogram import Bot, Dispatcher, executor, types
@@ -11,6 +11,8 @@ from aiogram.utils.emoji import emojize
 
 from schedule_bot import info
 from schedule_bot.bot import config
+from schedule_bot.bot.keyboard import Keyboard
+from schedule_bot.bot.mailing import mailing_parser
 from schedule_bot.db import ActiveUser
 from schedule_bot.manager import manager
 from schedule_bot.schedule import Schedule
@@ -18,130 +20,20 @@ from schedule_bot.utils import weather
 from schedule_bot.utils.times import Times
 
 KEY: str = config['bot']['key']
-ADMINS: List[int] = info.ADMINS
-DB_USER: str = info.DB_USER
-DB_PASS: str = info.DB_PASS
+ADMINS: List[int] = config['bot']['admins']
 VIP: List[int] = info.VIP
 
 
-class BotState:
+class BotState(Enum):
     REGISTER = 0
     IDLE = 1
 
 
-class Keyboard:
-    def __init__(self) -> None:
-        self.IDLE_KEYBOARD = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        self.SCHEDULE_KEYBOARD = types.InlineKeyboardMarkup(row_width=2)
-        self.BACK_KEYBOARD = types.InlineKeyboardMarkup(row_width=1)
-        self.GROUP_KEYBOARD = types.InlineKeyboardMarkup(row_width=1)
-
-        self.IDLE_KEYBOARD.row(
-            types.KeyboardButton(text="Сегодня"),
-            types.KeyboardButton(text="Завтра"),
-        )
-        self.IDLE_KEYBOARD.add(types.KeyboardButton(text="Расписание"))
-        self.IDLE_KEYBOARD.add(types.KeyboardButton(text="Сейчас"))
-        self.IDLE_KEYBOARD.add(types.KeyboardButton(text="Выйти"))
-
-        self.SCHEDULE_KEYBOARD.row(
-            types.InlineKeyboardButton(
-                emojize("Понедельник :arrow_up:"), callback_data="01"
-            ),
-            types.InlineKeyboardButton(
-                emojize("Понедельник :arrow_down:"), callback_data="00"
-            ),
-        )
-
-        self.SCHEDULE_KEYBOARD.row(
-            types.InlineKeyboardButton(
-                emojize("Вторник :arrow_up:"), callback_data="11"
-            ),
-            types.InlineKeyboardButton(
-                emojize("Вторник :arrow_down:"), callback_data="10"
-            ),
-        )
-
-        self.SCHEDULE_KEYBOARD.row(
-            types.InlineKeyboardButton(
-                emojize("Среда :arrow_up:"), callback_data="21"
-            ),
-            types.InlineKeyboardButton(
-                emojize("Среда :arrow_down:"), callback_data="20"
-            ),
-        )
-
-        self.SCHEDULE_KEYBOARD.row(
-            types.InlineKeyboardButton(
-                emojize("Четверг :arrow_up:"), callback_data="31"
-            ),
-            types.InlineKeyboardButton(
-                emojize("Четверг :arrow_down:"), callback_data="30"
-            ),
-        )
-
-        self.SCHEDULE_KEYBOARD.row(
-            types.InlineKeyboardButton(
-                emojize("Пятница :arrow_up:"), callback_data="41"
-            ),
-            types.InlineKeyboardButton(
-                emojize("Пятница :arrow_down:"), callback_data="40"
-            ),
-        )
-
-        self.SCHEDULE_KEYBOARD.row(
-            types.InlineKeyboardButton(
-                emojize("Суббота :arrow_up:"), callback_data="51"
-            ),
-            types.InlineKeyboardButton(
-                emojize("Суббота :arrow_down:"), callback_data="50"
-            ),
-        )
-
-        self.SCHEDULE_KEYBOARD.add(
-            types.InlineKeyboardButton("Время", callback_data="99")
-        )
-
-        self.SCHEDULE_KEYBOARD.add(
-            types.InlineKeyboardButton("Неделя", callback_data="88")
-        )
-
-        self.BACK_KEYBOARD.add(
-            types.InlineKeyboardButton("Назад", callback_data="back")
-        )
-
-        self.GROUP_KEYBOARD.add(
-            types.InlineKeyboardButton(
-                "Список групп", callback_data="grouplist"
-            )
-        )
-
-
 bot = Bot(token=KEY)
 dp = Dispatcher(bot)
-# db = f"mysql://{DB_USER}:{DB_PASS}@localhost:3306/schedule?charset=utf8mb4"
 schedule = Schedule()
 
 keyboard = Keyboard()
-
-
-class NoExitParser(argparse.ArgumentParser):
-    def error(self, error_msg: str) -> NoReturn:
-        args = {'prog': self.prog, 'message': error_msg}
-        raise Exception(('error: %(message)s\n') % args)
-
-
-mailing_parser = NoExitParser(add_help=False)
-mailing_parser.add_argument("-a", "--all", action="store_true", default=False)
-mailing_parser.add_argument(
-    "-g",
-    "--groups",
-    action="store",  # extend?
-    dest="groups",
-    nargs="+",
-    type=str,
-)
-mailing_parser.add_argument("-m", "--message", action="store", type=str)
 
 
 async def morning_greeting() -> None:
