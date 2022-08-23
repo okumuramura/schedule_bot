@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  telegram-bot:
+    container_name: schedule-tg-bot
+    build: .
+    command: python bot/bot.py
+
+  postgres:
+    image: postgres:latest
+    container_name: schedule-db
+    environment:
+      - POSTGRES_PASSWORD=schedule_pass
+
+  updater:
+    container_name: schedule-updater
