@@ -25,9 +25,7 @@ class Group(Base):
 
     id: int = Column(Integer, primary_key=True)
     group: str = Column(String(20), nullable=False)
-    schedules: List[Schedule] = relationship(
-        "Schedule", back_populates="group"
-    )
+    schedules: List[Schedule] = relationship("Schedule", back_populates="group")
 
     def __init__(self, group: str) -> None:
         self.group = group
@@ -192,6 +190,7 @@ class ActiveUser(Base):
     tid: int = Column(Integer, unique=True, nullable=False)
     group_id: int = Column(Integer, ForeignKey("groups.id"))
     state: int = Column(Integer, default=0)
+    vip: bool = Column(Boolean, default=False)
 
     group: Group = relationship("Group")
 

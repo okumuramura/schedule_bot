@@ -365,11 +365,3 @@ def add_user(uid: int, commit: bool = True, session: Session = None) -> None:
     session.add(user)
     if commit:
         session.commit()
-
-
-@orm_function
-def user_exists(uid: int, session: Session = None) -> bool:
-    return (
-        session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).first()
-        is not None
-    )
