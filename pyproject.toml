@@ -7,7 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-SQLAlchemy = "1.4.32"
+SQLAlchemy = "^1.4.32"
 aiogram = "^2.20"
 aiohttp = "^3.8.1"
 aioschedule = "^0.5.2"
