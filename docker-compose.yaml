@@ -5,12 +5,21 @@ services:
     container_name: schedule-tg-bot
     build: .
     command: python bot/bot.py
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DB_HOST=postgres
 
   postgres:
     image: postgres:latest
     container_name: schedule-db
     environment:
       - POSTGRES_PASSWORD=schedule_pass
+  
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
 
   updater:
     container_name: schedule-updater

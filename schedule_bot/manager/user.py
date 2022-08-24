@@ -48,42 +48,8 @@ def add_user(uid: int, session: Session = None) -> None:
 
 
 @orm_function
-def logout_user(uid: int, session: Session = None) -> None:
+def drop_user_group(uid: int, session: Session = None) -> None:
     session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
-        {"group_id": None, "state": 0}
+        {"group_id": None}
     )
     session.commit()
-
-
-@orm_function
-def login_user(
-    uid: int,
-    group,
-    state: int = 1,
-    session: Session = None,
-) -> None:
-    group = session.query(db.Group).filter(db.Group.group == group).first()
-    session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
-        {"group_id": group.id, "state": state}
-    )
-    session.commit()
-
-
-@orm_function
-def get_user_state(uid: int, session: Session = None) -> int:
-    return (
-        session.query(db.ActiveUser.state)
-        .filter(db.ActiveUser.tid == uid)
-        .first()[0]
-    )
-
-
-@orm_function
-def set_user_state(
-    uid: int, state: int, commit: bool = True, session: Session = None
-) -> None:
-    session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
-        {"state": state}
-    )
-    if commit:
-        session.commit()

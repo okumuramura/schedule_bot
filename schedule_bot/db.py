@@ -191,7 +191,6 @@ class ActiveUser(Base):
     id: int = Column(Integer, primary_key=True, autoincrement=True)
     tid: int = Column(Integer, unique=True, nullable=False)
     group_id: int = Column(Integer, ForeignKey("groups.id"))
-    state: int = Column(Integer, default=0)
     vip: bool = Column(Boolean, default=False)
 
     group: Optional[Group] = relationship("Group", lazy='joined')
@@ -204,7 +203,7 @@ class ActiveUser(Base):
             self.group_id = group
 
     def __repr__(self) -> str:
-        return f"<User {self.tid}{(' [' + self.group.group + ']') if self.group is not None else ''} state: {self.state}>"
+        return f"<User {self.tid}{(' [' + self.group.group + ']') if self.group is not None else ''}>"
 
 
 if __name__ == '__main__':
