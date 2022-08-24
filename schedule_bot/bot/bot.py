@@ -3,7 +3,6 @@ import base64
 import shlex
 import textwrap
 from typing import Any, List
-from enum import Enum
 
 import aioschedule
 from aiogram import Bot, Dispatcher, executor, types
@@ -24,7 +23,8 @@ ADMINS: List[int] = config['bot']['admins']
 VIP: List[int] = info.VIP
 
 
-class BotState(Enum):
+# TODO using Finite State Machine for states
+class BotState:
     REGISTER = 0
     IDLE = 1
 
@@ -225,7 +225,7 @@ async def now_handler(msg: types.Message) -> None:
     else:
         user_info, user_group = data
         if user_info.state == BotState.IDLE and user_group is not None:
-            now = schedule.now(user_group.group)
+            now = schedule.now(user_info.group)
             await bot.send_message(
                 user_id, now, reply_markup=keyboard.IDLE_KEYBOARD
             )

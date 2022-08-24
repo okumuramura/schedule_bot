@@ -25,7 +25,9 @@ class Group(Base):
 
     id: int = Column(Integer, primary_key=True)
     group: str = Column(String(20), nullable=False)
+
     schedules: List[Schedule] = relationship("Schedule", back_populates="group")
+    users: List[ActiveUser] = relationship("ActiveUser", back_populates="group")
 
     def __init__(self, group: str) -> None:
         self.group = group
@@ -120,13 +122,13 @@ class Schedule(Base):
     num: int = Column(Integer)
     group_id: int = Column(Integer, ForeignKey("groups.id"))
     lesson_id: int = Column(Integer, ForeignKey("lessons.id"), nullable=False)
-    author_id: int = Column(Integer, ForeignKey("authors.id"))
-    lesson_type_id: int = Column(Integer, ForeignKey("lesson_types.id"))
+    author_id: int = Column(Integer, ForeignKey("authors.id"), nullable=True)
+    lesson_type_id: int = Column(Integer, ForeignKey("lesson_types.id"), nullable=True)
 
-    group: Group = relationship("Group", back_populates="schedules")
-    lesson: Lesson = relationship("Lesson", back_populates="schedules")
-    author: Author = relationship("Author", back_populates="schedules")
-    lesson_type: LessonType = relationship("LessonType")
+    group: Group = relationship("Group", back_populates="schedules", lazy='joined')
+    lesson: Lesson = relationship("Lesson", back_populates="schedules", lazy='joined')
+    author: Optional[Author] = relationship("Author", back_populates="schedules", lazy='joined')
+    lesson_type: Optional[LessonType] = relationship("LessonType", lazy='joined')
 
     def __init__(
         self,
@@ -192,7 +194,7 @@ class ActiveUser(Base):
     state: int = Column(Integer, default=0)
     vip: bool = Column(Boolean, default=False)
 
-    group: Group = relationship("Group")
+    group: Optional[Group] = relationship("Group", lazy='joined')
 
     def __init__(self, tid: int, group: Union[Group, int, None] = None) -> None:
         self.tid = tid
