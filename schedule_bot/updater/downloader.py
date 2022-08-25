@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import os
-from os import path
+from pathlib import Path
+from typing import List
 
 import aiohttp
 import requests
@@ -9,8 +11,26 @@ from bs4 import BeautifulSoup
 from schedule_bot.updater import logger
 
 
-def download(dest="./"):
-    os.makedirs(dest, exist_ok=True)
+async def hash_bytes(bytes: bytes) -> str:
+    sha1 = hashlib.sha1(bytes)
+
+    return sha1.hexdigest()
+
+
+async def hash_file(path: str) -> str:
+    BUFFER_SIZE = 65536  # 64 mb
+    sha1 = hashlib.sha1()
+
+    with open(path, 'rb') as file:
+        while file_bytes := file.read(BUFFER_SIZE):
+            sha1.update(file_bytes)
+
+    return sha1.hexdigest()
+
+
+async def download(dest: str = './') -> List[str]:
+    dest_path = Path(dest)
+    dest_path.mkdir(parents=True, exist_ok=True)
     schedule_page = r"https://istu.ru/material/raspisanie-zanyatiy"
     main_page = r"https://istu.ru/"
     page = requests.get(schedule_page)
@@ -28,36 +48,36 @@ def download(dest="./"):
         filenames = list(map(lambda l: l.split("/")[-1], links))
 
         if os.name == "nt":
+            logger.debug('Using Windows event loop policy')
             asyncio.set_event_loop_policy(
                 asyncio.WindowsSelectorEventLoopPolicy()
             )
 
         sem = asyncio.Semaphore(4)
 
-        async def download_file(link, name, dest=dest):
-            logger.info('Downloading %s as %s', link, name)
+        async def download_file(
+            link: str, name: str, dest: Path = dest_path
+        ) -> None:
+            logger.info('Downloading %s', name)
             async with sem, aiohttp.ClientSession() as session:
                 async with session.get(link) as source:
                     data = await source.read()
 
-            with open(path.join(dest, name), "wb") as file:
+            with open(dest / name, "wb") as file:
                 file.write(data)
 
-        loop = asyncio.get_event_loop()
         tasks = [
-            loop.create_task(download_file(link, name))
+            asyncio.create_task(download_file(link, name))
             for link, name in zip(links, filenames)
         ]
-        loop.run_until_complete(asyncio.wait(tasks))
-        loop.close()
+        await asyncio.gather(*tasks)
         logger.info('Finished')
-        return list(map(lambda name: path.join(dest, name), filenames))
-    return False
+        return list(map(lambda name: dest_path / name, filenames))
+    return []
 
 
 if __name__ == "__main__":
-    files = download("./FILES")
-    with open("files.txt", "w", encoding="utf-8") as file:
-        for f in files:
-            file.write(f)
-            file.write("\n")
+    if os.name == 'nt':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+    asyncio.run(download('./FILES'))

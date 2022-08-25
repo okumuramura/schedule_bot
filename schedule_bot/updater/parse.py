@@ -4,7 +4,7 @@ import argparse
 import logging
 import os
 import re
-from typing import Dict, List, Optional, Set, Union, Any
+from typing import Any, Dict, List, Optional, Set, Union
 
 import colorama
 import numpy as np
@@ -21,7 +21,7 @@ class Lesson:
         auditory: str = None,
         lesson_type: str = None,
         department: str = None,
-        raw: str = None,
+        raw: str = '',
     ) -> None:
         self.name: str = name
         self.author: str = author
@@ -62,13 +62,16 @@ class Lesson:
         return f"{str(self.department):^5}|{self.lesson_type.__str__():^16}|{str(self.name):^120}|{str(self.author):^25}|{str(self.auditory):^8} {colorama.Fore.BLUE}{self.raw:^120}{colorama.Fore.RESET}"
         # return f"({self.department})({self.lesson_type}) {self.name} - {self.author} {self.auditory}"
 
+    def __repr__(self) -> str:
+        return f'Lesson({str(self.department)}, {str(self.lesson_type)}, {str(self.name)}, {str(self.author)}, {str(self.auditory)})'
+
 
 def parse_lesson_exp(lesson_line: str) -> Lesson:
     def short_name(s: str, start_pos: Optional[int] = None) -> str:
         sp = start_pos is not None
-        LONG_NAMES = ["Аль Аккад Мхд Айман"]
+        LONG_NAMES = ["аль аккад мхд айман"]
 
-        if s in LONG_NAMES:
+        if s.lower() in LONG_NAMES:
             if sp:
                 return s, start_pos
             return s
@@ -116,13 +119,14 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
         return "+".join(final_type)
 
     lesson_line = lesson_line.replace("\n", " ")
+    raw_line = lesson_line
     # author_name = re.compile(r"[А-Я][а-я]+\s([А-Я](([а-я]+)|\.)\s?)+[А-Я]([а-я]+)?\.?")
     authorname_re = re.compile(
         r"(((пр\.)|(доц\.)|(проф\.))\s*)?(?P<ath>([А-ЯЁ][А-Яа-яё]+(\s|\.)+(\s|\.)?[А-ЯЁ](\s|\.)+(\s|\.)?[А-ЯЁ]\.?)|(([А-ЯЁ][а-яё]+\s?){3,}))"
     )
     department_re = re.compile(r"^\s*\(?(?P<dep>\d+\w?)\)?")
     classroom_re = re.compile(
-        r"((БИ|(\d(к.)?))\w?\s?-(ОД-)?\s?\d+\w?\d?((/\d[^\-/]*)|(\-[\d\w]+))?)|(ЭОиДОТ)|(ООО\s?[«\"][\w-]+[»\"])|(ижводоканал)|(ИжНТ)",
+        r"((БИ|(\d(к.)?))\w?\s?-*(ОД-)?\s?\d+\w?\d?((/\d[^\-/]*)|(\-[\d\w]+))?)|(ЭОиДОТ)|(ООО\s?[«\"][\w-]+[»\"])|(ижводоканал)|(ИжНТ)|(ee\.istu\.ru)",
         re.IGNORECASE,
     )
     lesson_type_re = re.compile(
@@ -130,7 +134,7 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
         re.IGNORECASE,
     )
     lesson_re = re.compile(
-        r"\s*((\(?[\w\s/+\.,-]+\)\s*)|(\([\w\s/+\.,-]+\)?\s*))*(?P<name>[\w\sё\.,-]{3,})(\s*(\([\w\s/+\.,-]+\)\s*))*(,\s*)?"
+        r'\s*((\(?[\w\s/ё+\.,\-"]+\)\s*)|(\([\w\s/ё+\.,\-"]+\)?\s*))*(?P<name>[\w\sё/+\.,\-"]{3,})(\s*(\([\w\sё/+\.,\-"]+\)\s*))*(,\s*)?'
     )
     lesson_re_no_author = re.compile(
         r"\s*(\(?[\w\s/+\.,-]+\)\s*)*(?P<name>[\w\sё\.-]{3,})(\s*(\([\w\s/+\.,-]+\)\s*))*(,\s*)?"
@@ -150,6 +154,7 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
     department = department_re.search(lesson_line)
     if department is not None:
         department = department.group("dep")
+        lesson_line = lesson_line.replace(department, '*' * len(department), 1)
 
     auditory = classroom_re.search(lesson_line)
     if auditory is not None:
@@ -177,7 +182,7 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
         lesson_name,
         author=author,
         department=department,
-        raw=lesson_line,
+        raw=raw_line,
         auditory=auditory,
         lesson_type=lesson_type,
     )
@@ -250,8 +255,7 @@ def parse_sheet(sheet: np.ndarray) -> Dict[str, List[Optional[Lesson]]]:
 
                                 if SHOW == "ALL":
                                     if PROGRESS:
-                                        if lesson_info.auditory == "2-134/2":
-                                            tqdm.write(lesson_info.__str__())
+                                        tqdm.write(lesson_info.__str__())
                                     else:
                                         print(lesson_info)
                                 if not lesson_info.is_full():
@@ -399,7 +403,7 @@ if __name__ == "__main__":
 
     is_updating: str = input("Put data into database (%s)? [y/n]: " % db_url)
     if is_updating.lower() == "y":
-        upd = Updater(db_url)
+        upd = Updater()
         upd.clear_schedule()
         print("Adding lessons list: ", end="")
         upd.add_lessons(LESSONS_SET)

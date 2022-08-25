@@ -1,10 +1,9 @@
-import db
 import logging
 
 from sqlalchemy.orm import Session
 
+from schedule_bot import db
 from schedule_bot.manager import manager, orm_function
-
 
 __log_format = r'[%(levelname)s] %(message)s'
 
@@ -19,7 +18,6 @@ class Updater:
     @orm_function
     def clear_schedule(self, session: Session = None) -> None:
         session.query(db.Schedule).delete()
-        # manager.session.execute(r"TRUNCATE TABLE `schedule`")
         session.commit()
 
     @orm_function
