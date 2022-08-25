@@ -1,5 +1,5 @@
-from typing import NoReturn
 import argparse
+from typing import NoReturn
 
 
 class NoExitParser(argparse.ArgumentParser):

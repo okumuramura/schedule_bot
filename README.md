@@ -34,7 +34,7 @@ Example of `config.toml` file:
 ```toml
 [bot]
 key = "<your bot api key>"
-admins = [] # some telegram ids
+admins = []  # some telegram ids
 
 [db]
 driver = "postgresql"
@@ -47,6 +47,7 @@ port = 6379
 [tools]
     [tools.weather]
     key = "<your accuweather.com api key>"
+    location = 294021  # location id on accuweather.com
 ```
 
 ## GUI

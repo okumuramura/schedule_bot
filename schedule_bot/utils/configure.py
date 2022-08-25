@@ -1,7 +1,6 @@
-from typing import Any, Optional, Tuple, Dict
 import logging
 import os
-
+from typing import Any, Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +14,7 @@ class Configure:
         default: Any,
         envkey: Optional[str] = None,
         config_path: Optional[Tuple[str]] = None,
-        not_none: bool = False
+        not_none: bool = False,
     ) -> Any:
         env_value = None
         config_value = None

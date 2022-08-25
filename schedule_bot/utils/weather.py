@@ -6,7 +6,7 @@ import aiohttp
 
 from schedule_bot import WEATHER_KEY
 
-API_KEY = WEATHER_KEY
+WEATHER_URL = "http://dataservice.accuweather.com/forecasts/v1/daily/1day/{location}?apikey={key}&language=ru-ru&details=true&metric=true"
 
 ICONS = {
     1: ":sun:",
@@ -42,9 +42,9 @@ ICONS = {
 
 async def get_weather(location: int = 296181) -> Optional[str]:
     async with aiohttp.ClientSession() as session:
-        weather_api_url = "http://dataservice.accuweather.com/forecasts/v1/daily/1day/{location}?apikey={key}&language=ru-ru&details=true&metric=true"
+        weather_api_url = WEATHER_URL
         async with session.get(
-            weather_api_url.format(location=location, key=API_KEY)
+            weather_api_url.format(location=location, key=WEATHER_KEY)
         ) as resp:
             if resp.status == 200:
                 weather = await resp.json()

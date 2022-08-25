@@ -5,18 +5,19 @@ from typing import Any, List
 
 import aioschedule
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.utils.emoji import emojize
-from aiogram.utils.deep_linking import get_start_link, decode_payload
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.utils.deep_linking import decode_payload, get_start_link
+from aiogram.utils.emoji import emojize
 
 from schedule_bot import (
+    BOT_ADMINS,
     REDIS_HOST,
     REDIS_PORT,
-    TELEGRAM_KEY
+    TELEGRAM_KEY,
+    WEATHER_LOCATION,
 )
-from schedule_bot.bot import config
 from schedule_bot.bot.keyboard import Keyboard
 from schedule_bot.bot.mailing import mailing_parser
 from schedule_bot.db import ActiveUser
@@ -25,8 +26,7 @@ from schedule_bot.schedule import Schedule
 from schedule_bot.utils import weather
 from schedule_bot.utils.times import Times
 
-KEY: str = TELEGRAM_KEY
-ADMINS: List[int] = config['bot']['admins']
+ADMINS: List[int] = BOT_ADMINS
 
 
 class States(StatesGroup):
@@ -35,7 +35,7 @@ class States(StatesGroup):
 
 
 redis = RedisStorage2(REDIS_HOST, REDIS_PORT)
-bot = Bot(token=KEY)
+bot = Bot(token=TELEGRAM_KEY)
 dp = Dispatcher(bot, storage=redis)
 schedule = Schedule()
 
@@ -53,7 +53,7 @@ async def morning_greeting() -> None:
     {end}
     """
     )
-    today_weather = await weather.get_weather(location=296181)
+    today_weather = await weather.get_weather(location=WEATHER_LOCATION)
 
     for vip_user in manager.get_all_vip_users():
         if vip_user.group is not None:
