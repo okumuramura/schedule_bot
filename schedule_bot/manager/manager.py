@@ -343,3 +343,10 @@ def add_user(uid: int, commit: bool = True, session: Session = None) -> None:
     session.add(user)
     if commit:
         session.commit()
+
+
+@orm_function
+def get_all_vip_users(session: Session = None) -> List[db.ActiveUser]:
+    return (
+        session.query(db.ActiveUser).filter(db.ActiveUser.vip.is_(True)).all()
+    )

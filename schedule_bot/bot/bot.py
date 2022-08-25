@@ -16,7 +16,6 @@ from schedule_bot import (
     REDIS_PORT,
     TELEGRAM_KEY
 )
-from schedule_bot import info
 from schedule_bot.bot import config
 from schedule_bot.bot.keyboard import Keyboard
 from schedule_bot.bot.mailing import mailing_parser
@@ -28,7 +27,6 @@ from schedule_bot.utils.times import Times
 
 KEY: str = TELEGRAM_KEY
 ADMINS: List[int] = config['bot']['admins']
-VIP: List[int] = info.VIP
 
 
 class States(StatesGroup):
@@ -57,30 +55,26 @@ async def morning_greeting() -> None:
     )
     today_weather = await weather.get_weather(location=296181)
 
-    user_info: ActiveUser
-    for vip_user in VIP:
-        data = manager.get_user(vip_user)
-        if data is not None:
-            user_info, user_group = data
-            if user_group is not None:
-                sch = schedule.today(user_group.group)
-                message = message_template.format(
-                    weekday=Times.today_weekday().lower(),
-                    date=Times.today_date(),
-                    header="Сегодня у вас нет пар"
-                    if len(sch) == 0
-                    else "Ваше расписание на сегодня:",
-                    weather=today_weather if today_weather is not None else "",
-                    schedule="Отдохните хорошенько!"
-                    if len(sch) == 0
-                    else "\n\n".join(sch),
-                    end="Хорошего дня!",
-                )
-                await bot.send_message(
-                    vip_user,
-                    emojize(message),
-                    reply_markup=keyboard.IDLE_KEYBOARD,
-                )
+    for vip_user in manager.get_all_vip_users():
+        if vip_user.group is not None:
+            sch = schedule.today(vip_user.group)
+            message = message_template.format(
+                weekday=Times.today_weekday().lower(),
+                date=Times.today_date(),
+                header="Сегодня у вас нет пар"
+                if len(sch) == 0
+                else "Ваше расписание на сегодня:",
+                weather=today_weather if today_weather is not None else "",
+                schedule="Отдохните хорошенько!"
+                if len(sch) == 0
+                else "\n\n".join(sch),
+                end="Хорошего дня!",
+            )
+            await bot.send_message(
+                vip_user.tid,
+                emojize(message),
+                reply_markup=keyboard.IDLE_KEYBOARD,
+            )
 
 
 async def add_user_critical(user_id: int) -> None:

@@ -4,9 +4,9 @@ from typing import Optional
 
 import aiohttp
 
-from schedule_bot import info
+from schedule_bot import WEATHER_KEY
 
-API_KEY = info.WEATHER_KEY
+API_KEY = WEATHER_KEY
 
 ICONS = {
     1: ":sun:",
