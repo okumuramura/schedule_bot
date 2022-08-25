@@ -11,6 +11,11 @@ from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
+from schedule_bot import (
+    REDIS_HOST,
+    REDIS_PORT,
+    TELEGRAM_KEY
+)
 from schedule_bot import info
 from schedule_bot.bot import config
 from schedule_bot.bot.keyboard import Keyboard
@@ -21,7 +26,7 @@ from schedule_bot.schedule import Schedule
 from schedule_bot.utils import weather
 from schedule_bot.utils.times import Times
 
-KEY: str = config['bot']['key']
+KEY: str = TELEGRAM_KEY
 ADMINS: List[int] = config['bot']['admins']
 VIP: List[int] = info.VIP
 
@@ -31,8 +36,7 @@ class States(StatesGroup):
     IDLE = State()
 
 
-# TODO add redis config
-redis = RedisStorage2()
+redis = RedisStorage2(REDIS_HOST, REDIS_PORT)
 bot = Bot(token=KEY)
 dp = Dispatcher(bot, storage=redis)
 schedule = Schedule()
@@ -170,7 +174,9 @@ async def invite_no_group_handler(msg: types.Message) -> None:
 
 
 @dp.message_handler(commands=["today"], state=States.IDLE)
-@dp.message_handler(lambda msg: msg.text.lower() == "сегодня", state=States.IDLE)
+@dp.message_handler(
+    lambda msg: msg.text.lower() == "сегодня", state=States.IDLE
+)
 async def today_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user_info: ActiveUser
@@ -238,7 +244,9 @@ async def now_handler(msg: types.Message) -> None:
 
 
 @dp.message_handler(commands=["schedule"], state=States.IDLE)
-@dp.message_handler(lambda msg: msg.text.lower() == "расписание", state=States.IDLE)
+@dp.message_handler(
+    lambda msg: msg.text.lower() == "расписание", state=States.IDLE
+)
 async def schedule_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user_info: ActiveUser
@@ -379,7 +387,9 @@ async def inline_group_list(callback: types.CallbackQuery) -> None:
 
 
 @dp.callback_query_handler(state='*')
-async def process_schedule(callback: types.CallbackQuery, state: FSMContext) -> None:
+async def process_schedule(
+    callback: types.CallbackQuery, state: FSMContext
+) -> None:
     await bot.answer_callback_query(callback.id)
     day, line = int(callback.data[0]), int(callback.data[1])
     user_id = callback.from_user.id

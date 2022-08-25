@@ -200,7 +200,7 @@ class ActiveUser(Base):
 
     id: int = Column(Integer, primary_key=True, autoincrement=True)
     tid: int = Column(Integer, unique=True, nullable=False)
-    group_id: int = Column(Integer, ForeignKey("groups.id"))
+    group_id: int = Column(Integer, ForeignKey("groups.id"), nullable=True)
     vip: bool = Column(Boolean, default=False)
 
     group: Optional[Group] = relationship("Group", lazy='joined')

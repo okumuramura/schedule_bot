@@ -7,6 +7,7 @@ ENV PYTHONBUFFERED=1 \
 
 COPY requirements.txt .
 
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt && \
+    pip install psycopg2-binary
 
 COPY . .
