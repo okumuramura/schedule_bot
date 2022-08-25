@@ -71,10 +71,12 @@ class NowAndNext:
 class Schedule:
     def __init__(self) -> None:
         self._time_schedule = ""
-        for lesson_num, (begin, end) in enumerate(zip(Times.lesson_begins, Times.lesson_ends), start=1):
-            self._time_schedule += (
-                f"{lesson_num}. {begin.strftime('%H:%M')} - {end.strftime('%H:%M')}\n"
-            )
+        for lesson_num, (begin, end) in enumerate(
+            zip(Times.lesson_begins, Times.lesson_ends), start=1
+        ):
+            begin_time = begin.strftime('%H:%M')
+            end_time = end.strftime('%H:%M')
+            self._time_schedule += f"{lesson_num}. {begin_time} - {end_time}\n"
 
     def date(self, add: int = 0) -> Tuple[int, int]:
         if add == 0:

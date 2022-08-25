@@ -316,10 +316,7 @@ def get_user(tid: int, session: Session = None):
 
 @orm_function
 def set_user_group(
-    uid: int,
-    group: str,
-    commit: bool = True,
-    session: Session = None
+    uid: int, group: str, commit: bool = True, session: Session = None
 ) -> None:
     group = session.query(db.Group).filter(db.Group.group == group).first()
     session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
@@ -330,7 +327,9 @@ def set_user_group(
 
 
 @orm_function
-def drop_user_group(uid: int, commit: bool = True, session: Session = None) -> None:
+def drop_user_group(
+    uid: int, commit: bool = True, session: Session = None
+) -> None:
     session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
         {"group_id": None}
     )

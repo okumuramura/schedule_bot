@@ -9,13 +9,14 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - DB_HOST=postgres
+      - DB_DRIVER=postgresql+psycopg2
 
   postgres:
     image: postgres:latest
     container_name: schedule-db
     environment:
       - POSTGRES_PASSWORD=schedule_pass
-  
+
   redis:
     image: redis:latest
     ports:

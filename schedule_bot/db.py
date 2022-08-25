@@ -123,12 +123,22 @@ class Schedule(Base):
     group_id: int = Column(Integer, ForeignKey("groups.id"))
     lesson_id: int = Column(Integer, ForeignKey("lessons.id"), nullable=False)
     author_id: int = Column(Integer, ForeignKey("authors.id"), nullable=True)
-    lesson_type_id: int = Column(Integer, ForeignKey("lesson_types.id"), nullable=True)
+    lesson_type_id: int = Column(
+        Integer, ForeignKey("lesson_types.id"), nullable=True
+    )
 
-    group: Group = relationship("Group", back_populates="schedules", lazy='joined')
-    lesson: Lesson = relationship("Lesson", back_populates="schedules", lazy='joined')
-    author: Optional[Author] = relationship("Author", back_populates="schedules", lazy='joined')
-    lesson_type: Optional[LessonType] = relationship("LessonType", lazy='joined')
+    group: Group = relationship(
+        "Group", back_populates="schedules", lazy='joined'
+    )
+    lesson: Lesson = relationship(
+        "Lesson", back_populates="schedules", lazy='joined'
+    )
+    author: Optional[Author] = relationship(
+        "Author", back_populates="schedules", lazy='joined'
+    )
+    lesson_type: Optional[LessonType] = relationship(
+        "LessonType", lazy='joined'
+    )
 
     def __init__(
         self,
