@@ -16,7 +16,7 @@ config = toml.load('config.toml')
 configure = Configure(config)
 
 REDIS_HOST: str = configure.get_option(
-    'localhost', 'REDIS_HOST', config, ('redis', 'host')
+    'localhost', 'REDIS_HOST', ('redis', 'host')
 )
 REDIS_PORT: int = configure.get_option(6379, 'REDIS_PORT', ('redis', 'port'))
 TELEGRAM_KEY: str = configure.get_option(

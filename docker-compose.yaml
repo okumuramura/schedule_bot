@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.7'
 
 services:
   telegram-bot:
@@ -20,10 +20,14 @@ services:
     environment:
       - POSTGRES_PASSWORD=pass
       - POSTGRES_DB=schedule
-    ports:
-      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgres/data
 
   redis:
     image: redis:latest
-    ports:
-      - 6379:6379
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
+  postgres_data:
