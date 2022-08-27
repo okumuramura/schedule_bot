@@ -9,6 +9,7 @@ services:
       - REDIS_PORT=6379
       - DB_HOST=postgres:pass@postgres/schedule
       - DB_DRIVER=postgresql
+      - TZ=Europe/Moscow
     depends_on:
       - postgres
       - redis

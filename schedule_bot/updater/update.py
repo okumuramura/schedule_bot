@@ -4,7 +4,7 @@ from schedule_bot.updater import downloader
 
 
 async def main() -> None:
-    result = await downloader.hash_file('./updater/parse.py')
+    result = await downloader.hash_file(__file__)
     print(result)
 
 

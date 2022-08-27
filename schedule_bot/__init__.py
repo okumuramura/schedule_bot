@@ -1,6 +1,7 @@
 import logging
 import logging.config
 from typing import List
+from pathlib import Path
 
 import toml
 from sqlalchemy import create_engine
@@ -8,10 +9,12 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from schedule_bot.utils.configure import Configure
 
-logging.config.fileConfig('./logger.conf', disable_existing_loggers=False)
+WORKDIR = Path(__file__).parent.parent
+
+logging.config.fileConfig(WORKDIR / 'logger.conf', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
-config = toml.load('config.toml')
+config = toml.load(WORKDIR / 'config.toml')
 
 configure = Configure(config)
 

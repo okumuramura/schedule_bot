@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class Configure:
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
 
     def get_option(

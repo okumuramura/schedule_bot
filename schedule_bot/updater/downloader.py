@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List
 
 import aiohttp
+import aiofiles
 import requests
 from bs4 import BeautifulSoup
 
@@ -21,8 +22,8 @@ async def hash_file(path: str) -> str:
     BUFFER_SIZE = 65536  # 64 mb
     sha1 = hashlib.sha1()
 
-    with open(path, 'rb') as file:
-        while file_bytes := file.read(BUFFER_SIZE):
+    async with aiofiles.open(path, 'rb') as file:
+        while file_bytes := await file.read(BUFFER_SIZE):
             sha1.update(file_bytes)
 
     return sha1.hexdigest()
@@ -63,8 +64,8 @@ async def download(dest: str = './') -> List[str]:
                 async with session.get(link) as source:
                     data = await source.read()
 
-            with open(dest / name, "wb") as file:
-                file.write(data)
+            async with aiofiles.open(dest / name, "wb") as file:
+                await file.write(data)
 
         tasks = [
             asyncio.create_task(download_file(link, name))
