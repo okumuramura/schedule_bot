@@ -27,7 +27,7 @@ def get_schedule(
     weekday: int,
     overline: bool,
     session: Session = None,
-):
+) -> List[Tuple[db.Schedule, db.Lesson, db.Author, db.LessonType]]:
     if isinstance(group, str):
         group = session.query(db.Group).filter(db.Group.group == group).first()
 
@@ -140,7 +140,7 @@ def get_users_in_groups(
     return (
         session.query(db.ActiveUser)
         .join(db.Group)
-        .filter(db.Group.group.in_(groups))
+        .filter(db.Group.group.in_(groups))  # type: ignore
         .all()
     )
 
@@ -305,22 +305,19 @@ def delete_schedule(
 
 
 @orm_function
-def get_user(tid: int, session: Session = None):
-    return (
-        session.query(db.ActiveUser, db.Group)
-        .filter(db.ActiveUser.tid == tid)
-        .outerjoin(db.Group, db.Group.id == db.ActiveUser.group_id)
-        .first()
-    )
+def get_user(tid: int, session: Session = None) -> Optional[db.ActiveUser]:
+    return session.query(db.ActiveUser).filter(db.ActiveUser.tid == tid).first()
 
 
 @orm_function
 def set_user_group(
     uid: int, group: str, commit: bool = True, session: Session = None
 ) -> None:
-    group = session.query(db.Group).filter(db.Group.group == group).first()
+    group_obj: db.Group = (
+        session.query(db.Group).filter(db.Group.group == group).first()
+    )
     session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
-        {'group_id': group.id}
+        {'group_id': group_obj.id}
     )
     if commit:
         session.commit()
@@ -348,5 +345,5 @@ def add_user(uid: int, commit: bool = True, session: Session = None) -> None:
 @orm_function
 def get_all_vip_users(session: Session = None) -> List[db.ActiveUser]:
     return (
-        session.query(db.ActiveUser).filter(db.ActiveUser.vip.is_(True)).all()
+        session.query(db.ActiveUser).filter(db.ActiveUser.vip.is_(True)).all()  # type: ignore
     )

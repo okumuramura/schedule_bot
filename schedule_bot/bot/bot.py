@@ -20,7 +20,6 @@ from schedule_bot import (
 )
 from schedule_bot.bot.keyboard import Keyboard
 from schedule_bot.bot.mailing import mailing_parser
-from schedule_bot.db import ActiveUser
 from schedule_bot.manager import manager
 from schedule_bot.schedule import Schedule
 from schedule_bot.utils import weather
@@ -102,10 +101,10 @@ async def help_handler(msg: types.Message) -> None:
 @dp.message_handler(commands=["start"], state='*')
 async def start_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
-    data = manager.get_user(user_id)
+    user = manager.get_user(user_id)
     args = msg.get_args()
     if args:  # invite link
-        if data is None:
+        if user is None:
             manager.add_user(user_id)
         try:
             group = decode_payload(args)
@@ -128,15 +127,15 @@ async def start_handler(msg: types.Message) -> None:
                 reply_markup=keyboard.GROUP_KEYBOARD,
             )
     else:
-        if data is not None and data[1] is not None:
+        if user is not None and user.group is not None:
             await States.IDLE.set()
             await bot.send_message(
                 msg.from_user.id,
-                f"Снова здравствуйте!\nВаша группа: {data[1].group}",
+                f"Снова здравствуйте!\nВаша группа: {user.group.group}",
                 reply_markup=keyboard.IDLE_KEYBOARD,
             )
         else:
-            if data is None:
+            if user is None:
                 manager.add_user(user_id)
             await States.REGISTER.set()
             await bot.send_message(
@@ -149,13 +148,11 @@ async def start_handler(msg: types.Message) -> None:
 @dp.message_handler(commands=["invite"], state=States.IDLE)
 async def invite_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
-    user_info: ActiveUser
-    data = manager.get_user(user_id)
-    if data is None:
+    user = manager.get_user(user_id)
+    if user is None:
         await add_user_critical(user_id)
     else:
-        user_info, user_group = data
-        group: str = user_group.group
+        group: str = user.group.group
         invite_link = await get_start_link(payload=group, encode=True)
         await bot.send_message(
             user_id, invite_link, reply_markup=keyboard.IDLE_KEYBOARD
@@ -173,13 +170,11 @@ async def invite_no_group_handler(msg: types.Message) -> None:
 )
 async def today_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
-    user_info: ActiveUser
-    data = manager.get_user(user_id)
-    if data is None:
+    user = manager.get_user(user_id)
+    if user is None:
         await add_user_critical(user_id)
     else:
-        user_info, user_group = data
-        sch = schedule.today(user_group.group)
+        sch = schedule.today(user.group.group)
         message_top = f"{Times.today_weekday()}. {'Над' if schedule.is_overline() else 'Под'} чертой.\n\n"
         if len(sch) == 0:
             await bot.send_message(
@@ -199,13 +194,11 @@ async def today_handler(msg: types.Message) -> None:
 @dp.message_handler(lambda msg: msg.text.lower() == "завтра", state=States.IDLE)
 async def tomorrow_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
-    user_info: ActiveUser
-    data = manager.get_user(user_id)
-    if data is None:
+    user = manager.get_user(user_id)
+    if user is None:
         await add_user_critical(user_id)
     else:
-        user_info, user_group = data
-        sch = schedule.tomorrow(user_group.group)
+        sch = schedule.tomorrow(user.group.group)
         message_top = f"{Times.tomorrow_weekday()}. {'Над' if schedule.is_overline(add=1) else 'Под'} чертой.\n\n"
         if len(sch) == 0:
             await bot.send_message(
@@ -225,13 +218,11 @@ async def tomorrow_handler(msg: types.Message) -> None:
 @dp.message_handler(lambda msg: msg.text.lower() == "сейчас", state=States.IDLE)
 async def now_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
-    user_info: ActiveUser
-    data = manager.get_user(user_id)
-    if data is None:
+    user = manager.get_user(user_id)
+    if user is None:
         await add_user_critical(user_id)
     else:
-        user_info, user_group = data
-        now = schedule.now(user_info.group)
+        now = schedule.now(user.group)
         await bot.send_message(
             user_id, now, reply_markup=keyboard.IDLE_KEYBOARD
         )
@@ -243,12 +234,10 @@ async def now_handler(msg: types.Message) -> None:
 )
 async def schedule_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
-    user_info: ActiveUser
-    data = manager.get_user(user_id)
-    if data is None:
+    user = manager.get_user(user_id)
+    if user is None:
         await add_user_critical(user_id)
     else:
-        user_info, user_group = data
         await bot.send_message(
             user_id,
             "Какое расписание вам нужно?",
@@ -284,21 +273,7 @@ async def quit_handler(msg: types.Message) -> None:
     )
 
 
-# TODO make the newsletter more flexible
-@dp.message_handler(lambda msg: msg.text.lower().startswith("рассылка:"))
-async def masssend_handler(msg: types.Message) -> None:
-    user_id = msg.from_user.id
-    if user_id in ADMINS:
-        text = msg.text[10:]
-        all_users = manager.get_all_users()
-        for user in all_users:
-            await bot.send_message(user.tid, text)
-        await bot.send_message(
-            user_id, "ok!", reply_markup=keyboard.IDLE_KEYBOARD
-        )
-
-
-@dp.message_handler(commands=["mailing"])  # v2
+@dp.message_handler(commands=["mailing"], state='*')  # v2
 async def mailing_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     if user_id in ADMINS:
@@ -306,9 +281,7 @@ async def mailing_handler(msg: types.Message) -> None:
         try:
             args = mailing_parser.parse_args(shlex.split(message_args))
         except Exception as error:
-            await msg.reply(
-                "error!\n" + str(error), reply_markup=keyboard.IDLE_KEYBOARD
-            )
+            await msg.reply(str(error), reply_markup=keyboard.IDLE_KEYBOARD)
             return
         for_all = args.all
         groups = args.groups
@@ -372,11 +345,10 @@ async def inline_back(callback: types.CallbackQuery) -> None:
 async def inline_group_list(callback: types.CallbackQuery) -> None:
     user_id = callback.from_user.id
     await bot.answer_callback_query(callback.id)
-    groups = manager.get_groups()
+    groups = sorted(manager.get_groups(), key=str)
     await bot.send_message(
         user_id,
-        "Список групп:\n"
-        + "\n".join([str(g) for g in sorted(groups, key=str)]),
+        "Список групп:\n" + "\n".join(map(str, groups)),
     )
 
 
@@ -396,7 +368,6 @@ async def process_schedule(
             message_id=message_id,
             reply_markup=keyboard.BACK_KEYBOARD,
         )
-        # await bot.send_message(user_id, schedule.time_schedule(), reply_markup=keyboard.IDLE_KEYBOARD)
     elif day == 8:  # Is week underline
         await bot.edit_message_text(
             f"Сейчас неделя {'над' if schedule.is_overline() else 'под'} чертой",
@@ -405,14 +376,12 @@ async def process_schedule(
             reply_markup=keyboard.BACK_KEYBOARD,
         )
     else:
-        user_info: ActiveUser
-        data = manager.get_user(user_id)
-        if data is None:
+        user = manager.get_user(user_id)
+        if user is None:
             await add_user_critical(user_id)
         else:
-            user_info, user_group = data
             if user_state == States.IDLE.state:
-                sch = schedule.day_schedule(user_group.group, day, bool(line))
+                sch = schedule.day_schedule(user.group.group, day, bool(line))
                 message_top = f"{Times.weekdays[day]}. {'Над' if bool(line) else 'Под'} чертой.\n\n"
                 if len(sch) == 0:
                     await bot.edit_message_text(
@@ -428,7 +397,6 @@ async def process_schedule(
                         message_id=message_id,
                         reply_markup=keyboard.BACK_KEYBOARD,
                     )
-                    # await bot.send_message(user_id, "\n\n".join(sch), reply_markup=keyboard.IDLE_KEYBOARD)
             else:
                 await bot.edit_message_text(
                     "Вы ещё не указали свою группу!",
