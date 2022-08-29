@@ -13,7 +13,7 @@ class Configure:
         self,
         default: Any,
         envkey: Optional[str] = None,
-        config_path: Optional[Tuple[str]] = None,
+        config_path: Optional[Tuple[str, ...]] = None,
         not_none: bool = False,
     ) -> Any:
         env_value = None
@@ -26,7 +26,7 @@ class Configure:
                 if not hasattr(config_value, '__getitem__'):
                     config_value = None
                     break
-                config_value = config_value.get(key)
+                config_value = config_value.get(key)  # type: ignore
 
         value = env_value or config_value or default
 

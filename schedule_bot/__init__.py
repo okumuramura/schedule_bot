@@ -11,7 +11,9 @@ from schedule_bot.utils.configure import Configure
 
 WORKDIR = Path(__file__).parent.parent
 
-logging.config.fileConfig(WORKDIR / 'logger.conf', disable_existing_loggers=False)
+logging.config.fileConfig(
+    WORKDIR / 'logger.conf', disable_existing_loggers=False
+)
 logger = logging.getLogger(__name__)
 
 config = toml.load(WORKDIR / 'config.toml')

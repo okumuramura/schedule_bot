@@ -33,9 +33,9 @@ class NowAndNext:
         return _now + sep + _next
 
     def time_to_str(self, time: datetime.time) -> str:
-        hour_str = ["час", "часа", "часов"]
-        minut_str = ["минуту", "минуты", "минут"]
-        second_str = ["секунду", "секунды", "секунд"]
+        hour_str = ("час", "часа", "часов")
+        minut_str = ("минуту", "минуты", "минут")
+        second_str = ("секунду", "секунды", "секунд")
         hour = time.hour
         minute = time.minute
         second = time.second
@@ -53,7 +53,7 @@ class NowAndNext:
             _second = f"{second} {self.num_declination(second, second_str)}"
         return " ".join([_hour, _minute, _second])
 
-    def num_declination(self, num: int, words: Tuple[str]) -> str:
+    def num_declination(self, num: int, words: Tuple[str, ...]) -> str:
         second_from_end = num % 100 // 10
         first_from_end = num % 10
         if (
@@ -114,14 +114,14 @@ class Schedule:
                 Times.lesson_ends[cur_lesson - 1], now_time
             )
         else:
-            time_remain = None
+            time_remain = datetime.time(0, 0, 0)
 
         if next_lesson is not None:
             time_until = self.time_delta(
                 Times.lesson_begins[next_lesson.num - 1], now_time
             )
         else:
-            time_until = None
+            time_until = datetime.time(0, 0, 0)
 
         now_next = NowAndNext(now_lesson, next_lesson, time_remain, time_until)
 
@@ -171,7 +171,7 @@ class Schedule:
 
     def time_delta(
         self, stime: datetime.time, etime: datetime.time
-    ) -> datetime.datetime:
+    ) -> datetime.time:
         delta_1 = datetime.timedelta(
             hours=stime.hour, minutes=stime.minute, seconds=stime.second
         )
