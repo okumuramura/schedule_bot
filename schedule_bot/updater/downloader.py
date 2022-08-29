@@ -10,6 +10,9 @@ import requests
 from bs4 import BeautifulSoup
 
 from schedule_bot.updater import logger
+from schedule_bot.updater.storage import FilesStorage
+
+storage = FilesStorage()
 
 
 async def hash_bytes(bytes: bytes) -> str:
@@ -64,8 +67,20 @@ async def download(dest: str = './') -> List[str]:
                 async with session.get(link) as source:
                     data = await source.read()
 
-            async with aiofiles.open(dest / name, "wb") as file:
-                await file.write(data)
+            file_hash = await hash_bytes(data)
+            stored_file_hash = await storage.get(name)
+            save = (dest / name).exists() or file_hash != stored_file_hash
+            logger.info(
+                "File hash (%s): %s %s",
+                name,
+                file_hash,
+                '(skip)' if not save else '',
+            )
+
+            if save:
+                await storage.set(name, file_hash)
+                async with aiofiles.open(dest / name, "wb") as file:
+                    await file.write(data)
 
         tasks = [
             asyncio.create_task(download_file(link, name))
