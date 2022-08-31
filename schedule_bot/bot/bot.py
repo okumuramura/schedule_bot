@@ -4,7 +4,7 @@ import textwrap
 from typing import Any, List
 
 import aioschedule
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher, executor, types, exceptions
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -17,6 +17,7 @@ from schedule_bot import (
     REDIS_PORT,
     TELEGRAM_KEY,
     WEATHER_LOCATION,
+    logger
 )
 from schedule_bot.bot.keyboard import Keyboard
 from schedule_bot.bot.mailing import mailing_parser
@@ -91,6 +92,27 @@ async def not_logged_in_yet(user_id: int) -> None:
         "Вы ещё не указали свою группу!",
         reply_markup=keyboard.GROUP_KEYBOARD,
     )
+
+
+async def send_message_to_user(user_id: int, message: str, disable_notification: bool = False):
+    try:
+        await bot.send_message(user_id, message, disable_notification=disable_notification)
+    except exceptions.BotBlocked:
+        logger.error(f"Target [ID:{user_id}]: blocked by user")
+    except exceptions.ChatNotFound:
+        logger.error(f"Target [ID:{user_id}]: invalid user ID")
+    except exceptions.RetryAfter as e:
+        logger.error(f"Target [ID:{user_id}]: Flood limit is exceeded. Sleep {e.timeout} seconds.")
+        await asyncio.sleep(e.timeout)
+        return await send_message_to_user(user_id, message)  # Recursive call
+    except exceptions.UserDeactivated:
+        logger.error(f"Target [ID:{user_id}]: user is deactivated")
+    except exceptions.TelegramAPIError:
+        logger.exception(f"Target [ID:{user_id}]: failed")
+    else:
+        logger.info(f"Target [ID:{user_id}]: success")
+        return True
+    return False
 
 
 @dp.message_handler(commands=["help"], state='*')
@@ -285,23 +307,32 @@ async def mailing_handler(msg: types.Message) -> None:
             return
         for_all = args.all
         groups = args.groups
-        message = args.message
+        message: str = args.message
+        count = 0
         if for_all:
             all_users = manager.get_all_users()
-            for user in all_users:
-                await bot.send_message(user.tid, message)
-            await msg.reply(
-                f"ok!\nотправлено пользователям: {len(all_users)}",
-                reply_markup=keyboard.IDLE_KEYBOARD,
-            )
+            try:
+                for user in all_users:
+                    if await send_message_to_user(user.tid, message):
+                        count += 1
+                    await asyncio.sleep(0.05)
+            finally:
+                await msg.reply(
+                    f"ok!\nотправлено пользователям: {count} из {len(all_users)}",
+                    reply_markup=keyboard.IDLE_KEYBOARD,
+                )
         elif groups is not None and len(groups) > 0:
             users = manager.get_users_in_groups(groups)
-            for user in users:
-                await bot.send_message(user.tid, message)
-            await msg.reply(
-                f"ok!\nотправлено пользователям: {len(users)}",
-                reply_markup=keyboard.IDLE_KEYBOARD,
-            )
+            try:
+                for user in users:
+                    if await send_message_to_user(user.tid, message):
+                        count += 1
+                    await asyncio.sleep(0.05)
+            finally:
+                await msg.reply(
+                    f"ok!\nотправлено пользователям: {count} из {len(users)}",
+                    reply_markup=keyboard.IDLE_KEYBOARD,
+                )
         else:
             await msg.reply(
                 "Не указаны фильтры для отправки. Чтобы отправить сообщение всем, испольуйте ключ -a или --all",
