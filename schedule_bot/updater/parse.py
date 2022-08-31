@@ -152,29 +152,30 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
     lesson_re_no_author = re.compile(regexp.LESSON_NO_AUTHOR)
 
     delta = 0
-    author_group = authorname_re.search(lesson_line)
-    if author_group is not None:
-        asp = author_group.span("ath")[0]
-        g = author_group.group(0)
+    author = authorname_re.search(lesson_line)
+    if author is not None:
+        asp = author.span("ath")[0]
+        g = author.group(0)
         t = re.search(r"^(?P<t>\s*((пр\.)|(доц\.)|(проф\.))\s*)", g)
         if t is not None:
             delta = len(t.group("t"))
 
-        author = author_group.group("ath")
-        author = author.rstrip()
+        author = author.group("ath").rstrip()
 
-    department_group = department_re.search(lesson_line)
-    if department_group is not None:
-        department = department_group.group("dep")
+    department = department_re.search(lesson_line)
+    if department is not None:
+        department = department.group("dep")
         lesson_line = lesson_line.replace(department, '*' * len(department), 1)
 
-    auditory_group = classroom_re.search(lesson_line)
-    if auditory_group is not None:
-        auditory = normalize_auditory(auditory_group.group(0))
+    auditory = classroom_re.search(lesson_line)
+    if auditory is not None:
+        auditory = normalize_auditory(auditory.group(0))
 
     lesson_type_group = lesson_type_re.search(lesson_line)
     if lesson_type_group is not None:
         lesson_type = normalize_lesson_type(lesson_type_group.group("type"))
+    else:
+        lesson_type = None
 
     # find author substring's start position
     if author is not None:
@@ -184,11 +185,11 @@ def parse_lesson_exp(lesson_line: str) -> Lesson:
         author_start_pos = len(lesson_line)
 
     if author is None:
-        lesson_name_group = lesson_re_no_author.search(lesson_line)
+        lesson_name = lesson_re_no_author.search(lesson_line)
     else:
-        lesson_name_group = lesson_re.search(lesson_line, endpos=author_start_pos)
-    if lesson_name_group is not None:
-        lesson_name = lesson_name_group.group("name").strip(", ")
+        lesson_name = lesson_re.search(lesson_line, endpos=author_start_pos)
+    if lesson_name is not None:
+        lesson_name = lesson_name.group("name").strip(", ")
 
     return Lesson(
         lesson_name,
