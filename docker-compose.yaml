@@ -1,0 +1,34 @@
+version: '3.7'
+
+services:
+  telegram-bot:
+    container_name: schedule-tg-bot
+    build: .
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DB_HOST=postgres:pass@postgres/schedule
+      - DB_DRIVER=postgresql
+      - TZ=Europe/Moscow
+    depends_on:
+      - postgres
+      - redis
+    command: bash -c "alembic upgrade head && python schedule_bot/bot/bot.py"
+
+  postgres:
+    image: postgres:latest
+    container_name: schedule-db
+    environment:
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=schedule
+    volumes:
+      - postgres_data:/var/lib/postgres/data
+
+  redis:
+    image: redis:latest
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
+  postgres_data:

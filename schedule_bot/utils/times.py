@@ -1,4 +1,6 @@
 import datetime
+from typing import Literal, Optional, Tuple
+
 
 class Times:
     weekdays = [
@@ -8,7 +10,7 @@ class Times:
         "Четверг",
         "Пятница",
         "Суббота",
-        "Воскресенье"
+        "Воскресенье",
     ]
 
     months = [
@@ -33,7 +35,7 @@ class Times:
         datetime.time(14, 0, 0),
         datetime.time(15, 40, 0),
         datetime.time(17, 20, 0),
-        datetime.time(19, 0, 0)
+        datetime.time(19, 0, 0),
     ]
 
     lesson_ends = [
@@ -43,15 +45,15 @@ class Times:
         datetime.time(15, 30, 0),
         datetime.time(17, 10, 0),
         datetime.time(18, 50, 0),
-        datetime.time(20, 30, 0)
+        datetime.time(20, 30, 0),
     ]
 
     @staticmethod
-    def lesson_time(lesson_num: int, format: str = "%H:%M") -> tuple:
+    def lesson_time(lesson_num: int, format: str = "%H:%M") -> Tuple[str, str]:
         return (
             Times.lesson_begins[lesson_num - 1].strftime(format),
             Times.lesson_ends[lesson_num - 1].strftime(format),
-            )
+        )
 
     @staticmethod
     def today_weekday() -> str:
@@ -62,14 +64,17 @@ class Times:
         return Times.weekdays[(datetime.datetime.today().weekday() + 1) % 7]
 
     @staticmethod
-    def today_month(case = "nominative") -> str:
-        allowed_cases = ["nominative", "genitive"]
+    def today_month(
+        case: Literal['nominative', 'genitive'] = 'nominative'
+    ) -> Optional[str]:
+        allowed_cases = ['nominative', 'genitive']
         if case in allowed_cases:
             return Times.months[(datetime.datetime.today().month - 1)].get(case)
-        else:
-            assert KeyError(f"Wrong case!, allowed: {', '.join(allowed_cases)}.")
+        assert KeyError(f'Wrong case!, allowed: {", ".join(allowed_cases)}.')
+        return None
 
     @staticmethod
     def today_date() -> str:
-        return f"{datetime.datetime.today().day} {Times.today_month('genitive')}"
-
+        return (
+            f'{datetime.datetime.today().day} {Times.today_month("genitive")}'
+        )
