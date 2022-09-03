@@ -70,11 +70,11 @@ async def morning_greeting() -> None:
                 else "\n\n".join(sch),
                 end="Хорошего дня!",
             )
-            await bot.send_message(
+            await send_message_to_user(
                 vip_user.tid,
-                emojize(message),
-                reply_markup=keyboard.IDLE_KEYBOARD,
+                emojize(message)
             )
+            await asyncio.sleep(0.05)
 
 
 async def add_user_critical(user_id: int) -> None:
@@ -184,6 +184,14 @@ async def invite_handler(msg: types.Message) -> None:
 @dp.message_handler(commands=['invite'], state=States.REGISTER)
 async def invite_no_group_handler(msg: types.Message) -> None:
     await not_logged_in_yet(msg.from_user.id)
+
+
+@dp.message_handler(commands=['donat'], state='*')
+async def donat_handler(msg: types.Message) -> None:
+    await bot.send_message(
+        msg.from_user.id,
+        'Вы можете поддержать автора денежным переводом на карту 4274320023342796 (сбер)'
+    )
 
 
 @dp.message_handler(commands=["today"], state=States.IDLE)
@@ -448,5 +456,8 @@ async def setup(_: Any) -> None:
     asyncio.create_task(morning_scheduler())
 
 
+async def shutdown(_: Any) -> None:
+    await redis.close()
+
 if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True, on_startup=setup)
+    executor.start_polling(dp, skip_updates=True, on_startup=setup, on_shutdown=shutdown)

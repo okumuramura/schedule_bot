@@ -4,7 +4,7 @@ from typing import Optional
 
 import aiohttp
 
-from schedule_bot import WEATHER_KEY
+from schedule_bot import WEATHER_KEY, logger
 
 WEATHER_URL = "http://dataservice.accuweather.com/forecasts/v1/daily/1day/{location}?apikey={key}&language=ru-ru&details=true&metric=true"
 
@@ -42,6 +42,7 @@ ICONS = {
 
 async def get_weather(location: int = 296181) -> Optional[str]:
     async with aiohttp.ClientSession() as session:
+        logger.info("Weather request for location %d", location)
         weather_api_url = WEATHER_URL
         async with session.get(
             weather_api_url.format(location=location, key=WEATHER_KEY)

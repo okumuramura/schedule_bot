@@ -68,7 +68,7 @@ async def download(dest: str = './') -> List[str]:
                     data = await source.read()
 
             file_hash = await hash_bytes(data)
-            stored_file_hash = await storage.get(name)
+            stored_file_hash = await storage.getset(name, file_hash)
             save = (dest / name).exists() or file_hash != stored_file_hash
             logger.info(
                 "File hash (%s): %s %s",
@@ -77,10 +77,9 @@ async def download(dest: str = './') -> List[str]:
                 '(skip)' if not save else '',
             )
 
-            if save:
-                await storage.set(name, file_hash)
-                async with aiofiles.open(dest / name, "wb") as file:
-                    await file.write(data)
+            # TODO download and parse only new files
+            async with aiofiles.open(dest / name, "wb") as file:
+                await file.write(data)
 
         tasks = [
             asyncio.create_task(download_file(link, name))

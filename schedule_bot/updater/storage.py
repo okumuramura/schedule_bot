@@ -27,3 +27,9 @@ class FilesStorage:
         if value is None:
             return None
         return value.decode('utf-8')
+
+    async def getset(self, file: str, hash: str) -> Optional[str]:
+        value: Optional[bytes] = await self.redis.getset(self.__keyify(file), hash)
+        if value is None:
+            return None
+        return value.decode('utf-8')
