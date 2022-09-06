@@ -88,7 +88,7 @@ class Schedule:
             ).isocalendar()[1:]
         return week, weekday
 
-    def now(self, group: Union[str, db.Group]) -> NowAndNext:
+    def now(self, group: db.Group) -> NowAndNext:
         week, weekday = datetime.datetime.now().isocalendar()[1:]
         now_time = datetime.datetime.now().time()
         cur_lesson = -1

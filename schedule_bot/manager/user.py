@@ -50,6 +50,6 @@ def add_user(uid: int, session: Session = None) -> None:
 @orm_function
 def drop_user_group(uid: int, session: Session = None) -> None:
     session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
-        {"group_id": None}
+        {'group_id': None}
     )
     session.commit()

@@ -74,7 +74,7 @@ def get_lesson_by_num(
 
 @orm_function
 def get_lesson_with_next(
-    group: Union[str, db.Group],
+    group: db.Group,
     weekday: int,
     overline: bool,
     num: int,
@@ -121,10 +121,10 @@ def get_author_schedule(
 @orm_function
 def get_data(session: Session = None) -> Dict[str, List[Any]]:
     data = {}
-    data["lessons"] = session.query(db.Lesson).all()
-    data["authors"] = session.query(db.Author).all()
-    data["types"] = session.query(db.LessonType).all()
-    data["groups"] = session.query(db.Group).all()
+    data['lessons'] = session.query(db.Lesson).all()
+    data['authors'] = session.query(db.Author).all()
+    data['types'] = session.query(db.LessonType).all()
+    data['groups'] = session.query(db.Group).all()
     return data
 
 
@@ -328,7 +328,7 @@ def drop_user_group(
     uid: int, commit: bool = True, session: Session = None
 ) -> None:
     session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
-        {"group_id": None}
+        {'group_id': None}
     )
     if commit:
         session.commit()

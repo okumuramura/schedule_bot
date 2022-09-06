@@ -99,7 +99,7 @@ class Updater:
                     .first()
                 )
                 if t_id is None:
-                    print("No lesson type in db: " + lesson.lesson_type)
+                    print('No lesson type in db: ' + lesson.lesson_type)
                 else:
                     t_id = t_id[0]
             else:
