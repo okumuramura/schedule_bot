@@ -4,7 +4,7 @@ import textwrap
 from typing import Any, List
 
 import aioschedule
-from aiogram import Bot, Dispatcher, executor, types, exceptions
+from aiogram import Bot, Dispatcher, exceptions, executor, types
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -13,11 +13,12 @@ from aiogram.utils.emoji import emojize
 
 from schedule_bot import (
     BOT_ADMINS,
+    BOT_SKIP_UPDATES,
     REDIS_HOST,
     REDIS_PORT,
     TELEGRAM_KEY,
     WEATHER_LOCATION,
-    logger
+    logger,
 )
 from schedule_bot.bot.keyboard import Keyboard
 from schedule_bot.bot.mailing import mailing_parser
@@ -70,10 +71,7 @@ async def morning_greeting() -> None:
                 else '\n\n'.join(sch),
                 end='Хорошего дня!',
             )
-            await send_message_to_user(
-                vip_user.tid,
-                emojize(message)
-            )
+            await send_message_to_user(vip_user.tid, emojize(message))
             await asyncio.sleep(0.05)
 
 
@@ -94,23 +92,29 @@ async def not_logged_in_yet(user_id: int) -> None:
     )
 
 
-async def send_message_to_user(user_id: int, message: str, disable_notification: bool = False):
+async def send_message_to_user(
+    user_id: int, message: str, disable_notification: bool = False
+):
     try:
-        await bot.send_message(user_id, message, disable_notification=disable_notification)
+        await bot.send_message(
+            user_id, message, disable_notification=disable_notification
+        )
     except exceptions.BotBlocked:
-        logger.error(f'Target [ID:{user_id}]: blocked by user')
+        logger.error(f'Sending [ID:{user_id}]: blocked by user')
     except exceptions.ChatNotFound:
-        logger.error(f'Target [ID:{user_id}]: invalid user ID')
+        logger.error(f'Sending [ID:{user_id}]: invalid user ID')
     except exceptions.RetryAfter as e:
-        logger.error(f'Target [ID:{user_id}]: Flood limit is exceeded. Sleep {e.timeout} seconds.')
+        logger.error(
+            f'Sending [ID:{user_id}]: Flood limit is exceeded. Sleep {e.timeout} seconds.'
+        )
         await asyncio.sleep(e.timeout)
         return await send_message_to_user(user_id, message)  # Recursive call
     except exceptions.UserDeactivated:
-        logger.error(f'Target [ID:{user_id}]: user is deactivated')
+        logger.error(f'Sending [ID:{user_id}]: user is deactivated')
     except exceptions.TelegramAPIError:
         logger.exception(f'Target [ID:{user_id}]: failed')
     else:
-        logger.info(f'Target [ID:{user_id}]: success')
+        logger.info(f'Sending [ID:{user_id}]: success')
         return True
     return False
 
@@ -186,11 +190,11 @@ async def invite_no_group_handler(msg: types.Message) -> None:
     await not_logged_in_yet(msg.from_user.id)
 
 
-@dp.message_handler(commands=['donat'], state='*')
-async def donat_handler(msg: types.Message) -> None:
+@dp.message_handler(commands=['donate'], state='*')
+async def donate_handler(msg: types.Message) -> None:
     await bot.send_message(
         msg.from_user.id,
-        'Вы можете поддержать автора денежным переводом на карту 4274320023342796 (сбер)'
+        'Вы можете поддержать автора денежным переводом на карту 4274320023342796 (сбер)',
     )
 
 
@@ -273,6 +277,13 @@ async def schedule_handler(msg: types.Message) -> None:
             'Какое расписание вам нужно?',
             reply_markup=keyboard.SCHEDULE_KEYBOARD,
         )
+
+
+@dp.message_handler(commands=['settings'], state='*')
+async def settings_handler(msg: types.Message) -> None:
+    user_id = msg.from_user.id
+    keyboard = Keyboard.build_settings_keyboard(user_id)
+    await bot.send_message(user_id, 'Ваши настройки:', reply_markup=keyboard)
 
 
 @dp.message_handler(commands=['week'], state='*')
@@ -391,6 +402,23 @@ async def inline_group_list(callback: types.CallbackQuery) -> None:
     )
 
 
+@dp.callback_query_handler(lambda c: c.data.startswith('settings'), state='*')
+async def setting_setter_handler(callback: types.CallbackQuery) -> None:
+    user_id = callback.from_user.id
+    await bot.answer_callback_query(callback.id)
+    _, option, value = callback.data.split('_')
+    if option == 'vip':
+        manager.set_vip_status_by_telegram_id(user_id, bool(int(value)))
+    new_keyboard = Keyboard.build_settings_keyboard(user_id)
+    await bot.edit_message_text(
+        'Ваши настройки:',
+        chat_id=user_id,
+        message_id=callback.message.message_id,
+        reply_markup=new_keyboard,
+    )
+
+
+# TODO split on multiply handlers
 @dp.callback_query_handler(state='*')
 async def process_schedule(
     callback: types.CallbackQuery, state: FSMContext
@@ -459,5 +487,11 @@ async def setup(_: Any) -> None:
 async def shutdown(_: Any) -> None:
     await redis.close()
 
+
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True, on_startup=setup, on_shutdown=shutdown)
+    executor.start_polling(
+        dp,
+        skip_updates=BOT_SKIP_UPDATES,
+        on_startup=setup,
+        on_shutdown=shutdown,
+    )

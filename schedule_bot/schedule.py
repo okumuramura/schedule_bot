@@ -54,8 +54,7 @@ class NowAndNext:
         return " ".join([_hour, _minute, _second])
 
     def num_declination(self, num: int, words: Tuple[str, ...]) -> str:
-        '''Declension of a noun after a numeral. words - three forms of a noun.
-        '''
+        '''Declension of a noun after a numeral. words - three forms of a noun.'''
         second_from_end = num % 100 // 10
         first_from_end = num % 10
         if (

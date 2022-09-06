@@ -2,7 +2,6 @@ import argparse
 
 from schedule_bot import DB_URL
 
-
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument(
     '-d',

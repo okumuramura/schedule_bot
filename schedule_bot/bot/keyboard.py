@@ -1,6 +1,8 @@
 from aiogram import types
 from aiogram.utils.emoji import emojize
 
+from schedule_bot.manager import manager
+
 
 class Keyboard:
     def __init__(self) -> None:
@@ -88,3 +90,22 @@ class Keyboard:
                 'Список групп', callback_data='grouplist'
             )
         )
+
+    @staticmethod
+    def build_settings_keyboard(user_id: int) -> types.InlineKeyboardMarkup:
+        keyboard = types.InlineKeyboardMarkup(row_width=1)
+        fields = (
+            'Утренние сообщения',
+        )
+        settings = manager.get_user_settings_by_telegram_id(user_id)
+        if not settings:
+            return None
+
+        for message, value in zip(fields, settings.values()):
+            keyboard.add(
+                types.InlineKeyboardButton(
+                    f'{message}: {"ON" if value else "OFF"}',
+                    callback_data=('settings_vip_%d' % (not value))
+                )
+            )
+        return keyboard

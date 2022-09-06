@@ -347,3 +347,25 @@ def get_all_vip_users(session: Session = None) -> List[db.ActiveUser]:
     return (
         session.query(db.ActiveUser).filter(db.ActiveUser.vip.is_(True)).all()  # type: ignore
     )
+
+
+@orm_function
+def set_vip_status_by_telegram_id(
+    tid: int, value: bool, session: Session = None
+) -> None:
+    session.query(db.ActiveUser).filter(db.ActiveUser.tid == tid).update(
+        {db.ActiveUser.vip: value}
+    )
+    session.commit()
+
+
+@orm_function
+def get_user_settings_by_telegram_id(
+    tid: int, session: Session = None
+) -> Optional[Dict[str, Any]]:
+    user: Optional[db.ActiveUser] = (
+        session.query(db.ActiveUser).filter(db.ActiveUser.tid == tid).first()
+    )
+    if user:
+        return {'vip': user.vip}
+    return None

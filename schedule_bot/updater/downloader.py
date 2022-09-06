@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 from typing import List
 
-import aiohttp
 import aiofiles
+import aiohttp
 import requests
 from bs4 import BeautifulSoup
 
@@ -32,9 +32,7 @@ async def hash_file(path: str) -> str:
     return sha1.hexdigest()
 
 
-async def download_file(
-    link: str, name: str, dest: Path
-) -> None:
+async def download_file(link: str, name: str, dest: Path) -> None:
     logger.info('Downloading %s', name)
     async with aiohttp.ClientSession() as session:
         async with session.get(link) as source:
