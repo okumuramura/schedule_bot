@@ -32,54 +32,53 @@ async def hash_file(path: str) -> str:
     return sha1.hexdigest()
 
 
+async def download_file(
+    link: str, name: str, dest: Path
+) -> None:
+    logger.info('Downloading %s', name)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(link) as source:
+            data = await source.read()
+
+    file_hash = await hash_bytes(data)
+    stored_file_hash = await storage.getset(name, file_hash)
+    save = (dest / name).exists() or file_hash != stored_file_hash
+    logger.info(
+        'File hash (%s): %s %s',
+        name,
+        file_hash,
+        '(skip)' if not save else '',
+    )
+
+    # TODO download and parse only new files
+    async with aiofiles.open(dest / name, 'wb') as file:
+        await file.write(data)
+
+
 async def download(dest: str = './') -> List[str]:
     dest_path = Path(dest)
     dest_path.mkdir(parents=True, exist_ok=True)
-    schedule_page = r"https://istu.ru/material/raspisanie-zanyatiy"
-    main_page = r"https://istu.ru/"
+    schedule_page = r'https://istu.ru/material/raspisanie-zanyatiy'
+    main_page = r'https://istu.ru/'
     page = requests.get(schedule_page)
     links = []
 
     if page.status_code == 200:
-        soup = BeautifulSoup(page.text.encode("utf-8"), "html.parser")
-        table = soup.find("table", attrs={"class": "istu-table"}).find("tbody")
-        hrefs = table.find_all("a", href=True)
+        soup = BeautifulSoup(page.text.encode('utf-8'), 'html.parser')
+        table = soup.find('table', attrs={'class': 'istu-table'}).find('tbody')
+        hrefs = table.find_all('a', href=True)
         for href in hrefs:
-            link = href["href"]
+            link = href['href']
             links.append(main_page + link)
 
         logger.info('Fetch %d files. Downloading...', len(links))
-        filenames = list(map(lambda l: l.split("/")[-1], links))
+        filenames = list(map(lambda l: l.split('/')[-1], links))
 
-        if os.name == "nt":
+        if os.name == 'nt':
             logger.debug('Using Windows event loop policy')
             asyncio.set_event_loop_policy(
                 asyncio.WindowsSelectorEventLoopPolicy()
             )
-
-        sem = asyncio.Semaphore(4)
-
-        async def download_file(
-            link: str, name: str, dest: Path = dest_path
-        ) -> None:
-            logger.info('Downloading %s', name)
-            async with sem, aiohttp.ClientSession() as session:
-                async with session.get(link) as source:
-                    data = await source.read()
-
-            file_hash = await hash_bytes(data)
-            stored_file_hash = await storage.getset(name, file_hash)
-            save = (dest / name).exists() or file_hash != stored_file_hash
-            logger.info(
-                "File hash (%s): %s %s",
-                name,
-                file_hash,
-                '(skip)' if not save else '',
-            )
-
-            # TODO download and parse only new files
-            async with aiofiles.open(dest / name, "wb") as file:
-                await file.write(data)
 
         tasks = [
             asyncio.create_task(download_file(link, name))
@@ -91,7 +90,7 @@ async def download(dest: str = './') -> List[str]:
     return []
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     if os.name == 'nt':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
