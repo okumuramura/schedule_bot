@@ -42,30 +42,16 @@ class NowAndNext:
         if hour == 0:
             _hour = ""
         else:
-            _hour = f"{hour} {self.num_declination(hour, hour_str)}"
+            _hour = f"{hour} {num_declination(hour, hour_str)}"
         if minute == 0:
             _minute = ""
         else:
-            _minute = f"{minute} {self.num_declination(minute, minut_str)}"
+            _minute = f"{minute} {num_declination(minute, minut_str)}"
         if second == 0:
             _second = ""
         else:
-            _second = f"{second} {self.num_declination(second, second_str)}"
+            _second = f"{second} {num_declination(second, second_str)}"
         return " ".join([_hour, _minute, _second])
-
-    def num_declination(self, num: int, words: Tuple[str, ...]) -> str:
-        '''Declension of a noun after a numeral. words - three forms of a noun.'''
-        second_from_end = num % 100 // 10
-        first_from_end = num % 10
-        if (
-            second_from_end == 1
-            or first_from_end == 0
-            or (5 <= first_from_end <= 9)
-        ):
-            return words[2]
-        elif first_from_end == 1:
-            return words[0]
-        return words[1]
 
 
 class Schedule:
@@ -179,3 +165,18 @@ class Schedule:
             hours=etime.hour, minutes=etime.minute, seconds=etime.second
         )
         return (datetime.datetime.min + (delta_1 - delta_2)).time()
+
+
+def num_declination(num: int, words: Tuple[str, ...]) -> str:
+    '''Declension of a noun after a numeral. words - three forms of a noun.'''
+    second_from_end = num % 100 // 10
+    first_from_end = num % 10
+    if (
+        second_from_end == 1
+        or first_from_end == 0
+        or (5 <= first_from_end <= 9)
+    ):
+        return words[2]
+    elif first_from_end == 1:
+        return words[0]
+    return words[1]

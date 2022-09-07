@@ -79,7 +79,7 @@ async def download(dest: str = './') -> List[str]:
             )
 
         tasks = [
-            asyncio.create_task(download_file(link, name))
+            asyncio.create_task(download_file(link, name, dest_path))
             for link, name in zip(links, filenames)
         ]
         await asyncio.gather(*tasks)
