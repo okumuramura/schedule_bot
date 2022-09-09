@@ -30,7 +30,15 @@ class Configure:
 
         value = env_value or config_value or default
 
+        config_path_str = '.'.join(config_path)
         if not_none and value is None:
-            raise ValueError('Option %s can not be None' % (envkey or ''))
+            raise ValueError(
+                'Option %s can not be None' % (envkey or config_path_str or '')
+            )
 
+        logger.debug(
+            'Config option %s has value %r',
+            (envkey or config_path_str or ''),
+            value,
+        )
         return value

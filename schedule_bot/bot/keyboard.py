@@ -94,9 +94,7 @@ class Keyboard:
     @staticmethod
     def build_settings_keyboard(user_id: int) -> types.InlineKeyboardMarkup:
         keyboard = types.InlineKeyboardMarkup(row_width=1)
-        fields = (
-            'Утренние сообщения',
-        )
+        fields = ('Утренние сообщения',)
         settings = manager.get_user_settings_by_telegram_id(user_id)
         if not settings:
             return None
@@ -105,7 +103,7 @@ class Keyboard:
             keyboard.add(
                 types.InlineKeyboardButton(
                     f'{message}: {"ON" if value else "OFF"}',
-                    callback_data=('settings_vip_%d' % (not value))
+                    callback_data=('settings_vip_%d' % (not value)),
                 )
             )
         return keyboard

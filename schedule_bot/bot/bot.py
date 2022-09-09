@@ -65,7 +65,7 @@ async def morning_greeting() -> None:
                 header='Сегодня у вас нет пар'
                 if len(sch) == 0
                 else 'Ваше расписание на сегодня:',
-                weather=today_weather if today_weather is not None else '',
+                weather=today_weather if today_weather else '',
                 schedule='Отдохните хорошенько!'
                 if len(sch) == 0
                 else '\n\n'.join(sch),
