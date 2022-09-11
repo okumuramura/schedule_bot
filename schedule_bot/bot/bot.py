@@ -94,7 +94,7 @@ async def not_logged_in_yet(user_id: int) -> None:
 
 async def send_message_to_user(
     user_id: int, message: str, disable_notification: bool = False
-):
+) -> bool:
     try:
         await bot.send_message(
             user_id, message, disable_notification=disable_notification

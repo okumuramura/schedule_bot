@@ -96,15 +96,15 @@ class Schedule:
         ):
             now_lesson, next_lesson = None, now_lesson
         if now_lesson is not None:
-            time_remain = self.time_delta(
-                Times.lesson_ends[cur_lesson - 1], now_time
+            time_remain = time_delta(
+                now_time, Times.lesson_ends[cur_lesson - 1]
             )
         else:
             time_remain = datetime.time(0, 0, 0)
 
         if next_lesson is not None:
-            time_until = self.time_delta(
-                Times.lesson_begins[next_lesson.num - 1], now_time
+            time_until = time_delta(
+                now_time, Times.lesson_begins[next_lesson.num - 1]
             )
         else:
             time_until = datetime.time(0, 0, 0)
@@ -155,16 +155,19 @@ class Schedule:
             return True if self.date(add=add)[0] % 2 != 0 else False
         return not week % 2 == 0
 
-    def time_delta(
-        self, stime: datetime.time, etime: datetime.time
-    ) -> datetime.time:
-        delta_1 = datetime.timedelta(
-            hours=stime.hour, minutes=stime.minute, seconds=stime.second
-        )
-        delta_2 = datetime.timedelta(
-            hours=etime.hour, minutes=etime.minute, seconds=etime.second
-        )
-        return (datetime.datetime.min + (delta_1 - delta_2)).time()
+
+def time_delta(
+    stime: datetime.time, etime: datetime.time
+) -> datetime.time:
+    delta_1 = datetime.timedelta(
+        hours=stime.hour, minutes=stime.minute, seconds=stime.second
+    )
+    delta_2 = datetime.timedelta(
+        hours=etime.hour, minutes=etime.minute, seconds=etime.second
+    )
+    if delta_1 > delta_2:
+        delta_2 = delta_2 + datetime.timedelta(days=1)
+    return (datetime.datetime.min + (delta_2 - delta_1)).time()
 
 
 def num_declination(num: int, words: Tuple[str, ...]) -> str:
