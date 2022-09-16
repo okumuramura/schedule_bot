@@ -26,7 +26,7 @@ class NowAndNext:
         else:
             _now = "Сейчас у вас нет пары\n"
         if self.next is not None:
-            _next = f"Потом:\n{self.next.just_name()}\nначало через {self.time_to_str(self.until)}"
+            _next = f"Потом:\n{self.next.just_name()}\nначнётся через {self.time_to_str(self.until)}"
         else:
             _next = "Похоже на сегодня это всё!"
             sep = ""

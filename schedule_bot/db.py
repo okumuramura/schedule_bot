@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, List, Optional, Union
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, BigInteger
 from sqlalchemy.orm import relationship
 
 from schedule_bot import Base, engine, logger
@@ -199,7 +199,7 @@ class ActiveUser(Base):
     __tablename__ = 'active_users'
 
     id: int = Column(Integer, primary_key=True, autoincrement=True)
-    tid: int = Column(Integer, unique=True, nullable=False)
+    tid: int = Column(BigInteger, unique=True, nullable=False)
     group_id: int = Column(Integer, ForeignKey('groups.id'), nullable=True)
     vip: bool = Column(Boolean, default=False)
 
