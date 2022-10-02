@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from enum import Enum
 from typing import Any, List, Optional, Union
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, BigInteger
@@ -8,16 +7,6 @@ from sqlalchemy.orm import relationship
 
 from schedule_bot import Base, engine, logger
 from schedule_bot.utils.times import Times
-
-
-class Weekday(Enum):
-    MONDAY = 0
-    TUESDAY = 1
-    WEDNESDAY = 2
-    THURSDAY = 3
-    FRIDAY = 4
-    SATURDAY = 5
-    SUNDAY = 6
 
 
 class Group(Base):

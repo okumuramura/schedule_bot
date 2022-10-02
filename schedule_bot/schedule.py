@@ -76,28 +76,31 @@ class Schedule:
     def now(self, group: db.Group) -> NowAndNext:
         week, weekday = datetime.datetime.now().isocalendar()[1:]
         now_time = datetime.datetime.now().time()
-        cur_lesson = -1
+        cur_lesson = len(Times.lesson_begins)  # out of range
+
         for lesson_num, (_, end_time) in enumerate(
             zip(Times.lesson_begins, Times.lesson_ends)
         ):
             if now_time <= end_time:
                 cur_lesson = lesson_num + 1
                 break
+
         now_lesson, next_lesson = manager.get_lesson_with_next(
             group, weekday - 1, self.is_overline(week), cur_lesson
         )
+
+        time_begin = Times.lesson_begins[cur_lesson - 1]
+        time_end = Times.lesson_ends[cur_lesson - 1]
+
         if (
-            not (
-                Times.lesson_begins[cur_lesson - 1]
-                <= now_time
-                <= Times.lesson_ends[cur_lesson - 1]
-            )
+            not time_begin <= now_time <= time_end
             and now_lesson is not None
         ):
             now_lesson, next_lesson = None, now_lesson
+
         if now_lesson is not None:
             time_remain = time_delta(
-                now_time, Times.lesson_ends[cur_lesson - 1]
+                now_time, time_end
             )
         else:
             time_remain = datetime.time(0, 0, 0)
