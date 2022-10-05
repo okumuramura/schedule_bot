@@ -1,7 +1,7 @@
 import logging
 import logging.config
-from typing import List
 from pathlib import Path
+from typing import List
 
 import toml
 from sqlalchemy import create_engine
@@ -40,7 +40,9 @@ WEATHER_LOCATION: int = configure.get_option(
     296181, 'WEATHER_LOCATION', ('tools', 'weather', 'location')
 )
 BOT_ADMINS: List[int] = configure.get_option([], config_path=('bot', 'admins'))
-
+BOT_SKIP_UPDATES: bool = configure.get_option(
+    False, 'BOT_SKIP_UPDATES', ('bot', 'skip_updates')
+)
 
 DB_URL = f'{DB_DRIVER}://{DB_HOST}'
 

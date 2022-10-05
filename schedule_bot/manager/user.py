@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -31,7 +31,7 @@ def get_users_in_groups(
 
 
 @orm_function
-def get_user(tid: int, session: Session = None):
+def get_user(tid: int, session: Session = None) -> Optional[db.ActiveUser]:
     return (
         session.query(db.ActiveUser, db.Group)
         .filter(db.ActiveUser.tid == tid)
@@ -50,6 +50,6 @@ def add_user(uid: int, session: Session = None) -> None:
 @orm_function
 def drop_user_group(uid: int, session: Session = None) -> None:
     session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
-        {"group_id": None}
+        {'group_id': None}
     )
     session.commit()

@@ -1,5 +1,5 @@
-from typing import Optional
 from hashlib import md5
+from typing import Optional
 
 from aioredis import Redis
 
@@ -24,6 +24,14 @@ class FilesStorage:
 
     async def get(self, file: str) -> Optional[str]:
         value: Optional[bytes] = await self.redis.get(self.__keyify(file))
+        if value is None:
+            return None
+        return value.decode('utf-8')
+
+    async def getset(self, file: str, hash: str) -> Optional[str]:
+        value: Optional[bytes] = await self.redis.getset(
+            self.__keyify(file), hash
+        )
         if value is None:
             return None
         return value.decode('utf-8')

@@ -1,5 +1,5 @@
 import datetime
-from typing import Literal, Optional, Tuple
+from typing import Literal, Tuple
 
 
 class Times:
@@ -50,6 +50,8 @@ class Times:
 
     @staticmethod
     def lesson_time(lesson_num: int, format: str = "%H:%M") -> Tuple[str, str]:
+        if lesson_num < 1 or lesson_num > len(Times.lesson_begins):
+            raise IndexError(f'Lesson with num {lesson_num} out of times table')
         return (
             Times.lesson_begins[lesson_num - 1].strftime(format),
             Times.lesson_ends[lesson_num - 1].strftime(format),
@@ -66,12 +68,11 @@ class Times:
     @staticmethod
     def today_month(
         case: Literal['nominative', 'genitive'] = 'nominative'
-    ) -> Optional[str]:
+    ) -> str:
         allowed_cases = ['nominative', 'genitive']
-        if case in allowed_cases:
-            return Times.months[(datetime.datetime.today().month - 1)].get(case)
-        assert KeyError(f'Wrong case!, allowed: {", ".join(allowed_cases)}.')
-        return None
+        if case not in allowed_cases:
+            raise KeyError(f'Wrong case!, allowed: {", ".join(allowed_cases)}.')
+        return Times.months[(datetime.datetime.today().month - 1)][case]
 
     @staticmethod
     def today_date() -> str:

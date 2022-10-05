@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from sqlalchemy.orm import Session
 
-from schedule_bot import db
+from schedule_bot import db, logger
 from schedule_bot.manager import orm_function
 
 
@@ -74,7 +74,7 @@ def get_lesson_by_num(
 
 @orm_function
 def get_lesson_with_next(
-    group: Union[str, db.Group],
+    group: db.Group,
     weekday: int,
     overline: bool,
     num: int,
@@ -121,10 +121,10 @@ def get_author_schedule(
 @orm_function
 def get_data(session: Session = None) -> Dict[str, List[Any]]:
     data = {}
-    data["lessons"] = session.query(db.Lesson).all()
-    data["authors"] = session.query(db.Author).all()
-    data["types"] = session.query(db.LessonType).all()
-    data["groups"] = session.query(db.Group).all()
+    data['lessons'] = session.query(db.Lesson).all()
+    data['authors'] = session.query(db.Author).all()
+    data['types'] = session.query(db.LessonType).all()
+    data['groups'] = session.query(db.Group).all()
     return data
 
 
@@ -319,6 +319,7 @@ def set_user_group(
     session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
         {'group_id': group_obj.id}
     )
+    logger.info('User %s update group to %s (%d)', uid, group_obj.group, group_obj.id)
     if commit:
         session.commit()
 
@@ -328,8 +329,9 @@ def drop_user_group(
     uid: int, commit: bool = True, session: Session = None
 ) -> None:
     session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
-        {"group_id": None}
+        {'group_id': None}
     )
+    logger.info('User %s drop out group', uid)
     if commit:
         session.commit()
 
@@ -338,6 +340,7 @@ def drop_user_group(
 def add_user(uid: int, commit: bool = True, session: Session = None) -> None:
     user = db.ActiveUser(uid)
     session.add(user)
+    logger.info('New user added: %s', user.tid)
     if commit:
         session.commit()
 
@@ -347,3 +350,25 @@ def get_all_vip_users(session: Session = None) -> List[db.ActiveUser]:
     return (
         session.query(db.ActiveUser).filter(db.ActiveUser.vip.is_(True)).all()  # type: ignore
     )
+
+
+@orm_function
+def set_vip_status_by_telegram_id(
+    tid: int, value: bool, session: Session = None
+) -> None:
+    session.query(db.ActiveUser).filter(db.ActiveUser.tid == tid).update(
+        {db.ActiveUser.vip: value}
+    )
+    session.commit()
+
+
+@orm_function
+def get_user_settings_by_telegram_id(
+    tid: int, session: Session = None
+) -> Optional[Dict[str, Any]]:
+    user: Optional[db.ActiveUser] = (
+        session.query(db.ActiveUser).filter(db.ActiveUser.tid == tid).first()
+    )
+    if user:
+        return {'vip': user.vip}
+    return None

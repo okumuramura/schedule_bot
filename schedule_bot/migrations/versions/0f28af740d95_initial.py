@@ -1,10 +1,10 @@
-"""initial
+'''initial
 
 Revision ID: 0f28af740d95
 Revises:
 Create Date: 2022-08-25 15:49:29.899325
 
-"""
+'''
 import sqlalchemy as sa
 from alembic import op
 
@@ -70,15 +70,15 @@ def upgrade() -> None:
     )
 
     lesson_types_str = [
-        "лек",
-        "практ",
-        "лаб",
-        "лек+практ",
-        "практ+лаб",
-        "лек+лаб",
-        "практ+лек",
-        "лаб+практ",
-        "лаб+лек",
+        'лек',
+        'практ',
+        'лаб',
+        'лек+практ',
+        'практ+лаб',
+        'лек+лаб',
+        'практ+лек',
+        'лаб+практ',
+        'лаб+лек',
     ]
     op.bulk_insert(
         types_table,
