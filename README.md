@@ -36,6 +36,7 @@ Example of `config.toml` file:
 key = "<your bot api key>"
 admins = []  # some telegram ids
 skip_updates = false
+donate_card = "<card for money donates>"
 
 [db]
 driver = "postgresql"

@@ -44,6 +44,10 @@ BOT_SKIP_UPDATES: bool = configure.get_option(
     False, 'BOT_SKIP_UPDATES', ('bot', 'skip_updates')
 )
 
+BOT_DONATE_CARD: str = configure.get_option(
+    '', 'DONATE_CARD', ('bot', 'donate_card')
+)
+
 DB_URL = f'{DB_DRIVER}://{DB_HOST}'
 
 engine = create_engine(DB_URL)

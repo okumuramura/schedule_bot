@@ -14,6 +14,7 @@ from aiogram.utils.emoji import emojize
 from schedule_bot import (
     BOT_ADMINS,
     BOT_SKIP_UPDATES,
+    BOT_DONATE_CARD,
     REDIS_HOST,
     REDIS_PORT,
     TELEGRAM_KEY,
@@ -194,7 +195,7 @@ async def invite_no_group_handler(msg: types.Message) -> None:
 async def donate_handler(msg: types.Message) -> None:
     await bot.send_message(
         msg.from_user.id,
-        'Вы можете поддержать автора денежным переводом на карту 4274320023342796 (сбер)',
+        f'Вы можете поддержать автора денежным переводом на карту {BOT_DONATE_CARD}',
     )
 
 

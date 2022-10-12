@@ -319,7 +319,9 @@ def set_user_group(
     session.query(db.ActiveUser).filter(db.ActiveUser.tid == uid).update(
         {'group_id': group_obj.id}
     )
-    logger.info('User %s update group to %s (%d)', uid, group_obj.group, group_obj.id)
+    logger.info(
+        'User %s update group to %s (%d)', uid, group_obj.group, group_obj.id
+    )
     if commit:
         session.commit()
 

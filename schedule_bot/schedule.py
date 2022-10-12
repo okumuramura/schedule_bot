@@ -92,16 +92,11 @@ class Schedule:
         time_begin = Times.lesson_begins[cur_lesson - 1]
         time_end = Times.lesson_ends[cur_lesson - 1]
 
-        if (
-            not time_begin <= now_time <= time_end
-            and now_lesson is not None
-        ):
+        if not time_begin <= now_time <= time_end and now_lesson is not None:
             now_lesson, next_lesson = None, now_lesson
 
         if now_lesson is not None:
-            time_remain = time_delta(
-                now_time, time_end
-            )
+            time_remain = time_delta(now_time, time_end)
         else:
             time_remain = datetime.time(0, 0, 0)
 
@@ -159,9 +154,7 @@ class Schedule:
         return not week % 2 == 0
 
 
-def time_delta(
-    stime: datetime.time, etime: datetime.time
-) -> datetime.time:
+def time_delta(stime: datetime.time, etime: datetime.time) -> datetime.time:
     delta_1 = datetime.timedelta(
         hours=stime.hour, minutes=stime.minute, seconds=stime.second
     )
