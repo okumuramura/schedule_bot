@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from schedule_bot import db
+from schedule_bot.db import db
 from schedule_bot.manager import orm_function
 
 

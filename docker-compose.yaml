@@ -13,7 +13,9 @@ services:
     depends_on:
       - postgres
       - redis
-    command: bash -c "alembic upgrade head && python schedule_bot/bot/bot.py"
+    volumes:
+      - ./config/config.toml:/usr/src/app/config/config.toml
+    command: bash -c "alembic upgrade head && python -m schedule_bot"
 
   postgres:
     image: postgres:latest
@@ -29,6 +31,30 @@ services:
     volumes:
       - redis_data:/data
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./config/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - --web.enable-lifecycle
+      - --config.file=/etc/prometheus/prometheus.yaml
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - 3000:3000
+    depends_on:
+      - prometheus
+    links:
+      - prometheus
+
 volumes:
   redis_data:
   postgres_data:
+  prometheus_data:
+  grafana_data:

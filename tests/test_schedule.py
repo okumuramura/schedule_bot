@@ -1,9 +1,9 @@
-from typing import Tuple
 from datetime import time
+from typing import Tuple
 
 import pytest
 
-from schedule_bot.schedule import num_declination, time_delta
+from schedule_bot.utils.schedule import num_declination, time_delta
 
 
 @pytest.fixture

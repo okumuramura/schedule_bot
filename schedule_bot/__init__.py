@@ -12,11 +12,11 @@ from schedule_bot.utils.configure import Configure
 WORKDIR = Path(__file__).parent.parent
 
 logging.config.fileConfig(
-    WORKDIR / 'logger.conf', disable_existing_loggers=False
+    WORKDIR / 'config' / 'logger.conf', disable_existing_loggers=False
 )
 logger = logging.getLogger(__name__)
 
-config = toml.load(WORKDIR / 'config.toml')
+config = toml.load(WORKDIR / 'config' / 'config.toml')
 
 configure = Configure(config)
 
@@ -47,6 +47,9 @@ BOT_SKIP_UPDATES: bool = configure.get_option(
 BOT_DONATE_CARD: str = configure.get_option(
     '', 'DONATE_CARD', ('bot', 'donate_card')
 )
+
+METRICS_ENABLE: bool = configure.get_option(True, 'METRICS_ENABLE', ('metrics', 'enable'))
+METRICS_PORT: int = configure.get_option(8080, 'METRICS_PORT', ('metrics', 'port'))
 
 DB_URL = f'{DB_DRIVER}://{DB_HOST}'
 

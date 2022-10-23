@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, List, Optional, Union
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, BigInteger
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from schedule_bot import Base, engine, logger

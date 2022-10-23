@@ -1,7 +1,7 @@
 import datetime
 from typing import List, Optional, Tuple, Union
 
-from schedule_bot import db
+from schedule_bot.db import db
 from schedule_bot.manager import manager
 from schedule_bot.utils.times import Times
 

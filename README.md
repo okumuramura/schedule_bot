@@ -30,7 +30,7 @@ docker-compose up -d
 
 ## Configurate
 You can configurate bot app via config file or env variables.  
-Example of `config.toml` file:
+Example of `config/config.toml` file:
 ```toml
 [bot]
 key = "<your bot api key>"
@@ -45,6 +45,10 @@ host = "postgres:password@localhost/schedule"
 [redis]
 host = "localhost"
 port = 6379
+
+[metrics]
+enable = true
+port = 8080
 
 [tools]
     [tools.weather]

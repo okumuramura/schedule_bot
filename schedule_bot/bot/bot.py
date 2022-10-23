@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import shlex
 import textwrap
 from typing import Any, List
@@ -13,18 +14,19 @@ from aiogram.utils.emoji import emojize
 
 from schedule_bot import (
     BOT_ADMINS,
-    BOT_SKIP_UPDATES,
     BOT_DONATE_CARD,
+    BOT_SKIP_UPDATES,
     REDIS_HOST,
     REDIS_PORT,
     TELEGRAM_KEY,
     WEATHER_LOCATION,
     logger,
+    metrics,
 )
 from schedule_bot.bot.keyboard import Keyboard
 from schedule_bot.bot.mailing import mailing_parser
 from schedule_bot.manager import manager
-from schedule_bot.schedule import Schedule
+from schedule_bot.utils.schedule import Schedule
 from schedule_bot.utils import weather
 from schedule_bot.utils.times import Times
 
@@ -57,9 +59,11 @@ async def morning_greeting() -> None:
     )
     today_weather = await weather.get_weather(location=WEATHER_LOCATION)
 
-    for vip_user in manager.get_all_vip_users():
-        if vip_user.group is not None:
-            sch = schedule.today(vip_user.group)
+    vip_users = manager.get_all_vip_users_sorted()
+
+    for group, users in itertools.groupby(vip_users, key=lambda x: x.group):
+        if group is not None:
+            sch = schedule.today(group=group)
             message = message_template.format(
                 weekday=Times.today_weekday().lower(),
                 date=Times.today_date(),
@@ -72,12 +76,15 @@ async def morning_greeting() -> None:
                 else '\n\n'.join(sch),
                 end='Хорошего дня!',
             )
-            await send_message_to_user(vip_user.tid, emojize(message))
-            await asyncio.sleep(0.05)
+
+            for user in users:
+                await send_message_to_user(user.tid, emojize(message))
+                await asyncio.sleep(0.05)
 
 
 async def add_user_critical(user_id: int) -> None:
     manager.add_user(user_id)
+    metrics.NEW_USERS.inc()
     await States.REGISTER.set()
     await bot.send_message(
         user_id,
@@ -121,11 +128,13 @@ async def send_message_to_user(
 
 
 @dp.message_handler(commands=['help'], state='*')
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='help').time()
 async def help_handler(msg: types.Message) -> None:
     await bot.send_message(msg.from_user.id, 'Nothing here yet')
 
 
 @dp.message_handler(commands=['start'], state='*')
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='start').time()
 async def start_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user = manager.get_user(user_id)
@@ -133,6 +142,7 @@ async def start_handler(msg: types.Message) -> None:
     if args:  # invite link
         if user is None:
             manager.add_user(user_id)
+            metrics.NEW_USERS.inc()
         try:
             group = decode_payload(args)
             ok = manager.group_exists(group)
@@ -164,6 +174,7 @@ async def start_handler(msg: types.Message) -> None:
         else:
             if user is None:
                 manager.add_user(user_id)
+                metrics.NEW_USERS.inc()
             await States.REGISTER.set()
             await bot.send_message(
                 msg.from_user.id,
@@ -173,6 +184,7 @@ async def start_handler(msg: types.Message) -> None:
 
 
 @dp.message_handler(commands=['invite'], state=States.IDLE)
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='invite').time()
 async def invite_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user = manager.get_user(user_id)
@@ -187,11 +199,13 @@ async def invite_handler(msg: types.Message) -> None:
 
 
 @dp.message_handler(commands=['invite'], state=States.REGISTER)
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='invite').time()
 async def invite_no_group_handler(msg: types.Message) -> None:
     await not_logged_in_yet(msg.from_user.id)
 
 
 @dp.message_handler(commands=['donate'], state='*')
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='donate').time()
 async def donate_handler(msg: types.Message) -> None:
     await bot.send_message(
         msg.from_user.id,
@@ -203,6 +217,7 @@ async def donate_handler(msg: types.Message) -> None:
 @dp.message_handler(
     lambda msg: msg.text.lower() == 'сегодня', state=States.IDLE
 )
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='today').time()
 async def today_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user = manager.get_user(user_id)
@@ -227,6 +242,7 @@ async def today_handler(msg: types.Message) -> None:
 
 @dp.message_handler(commands=['tomorrow'], state=States.IDLE)
 @dp.message_handler(lambda msg: msg.text.lower() == 'завтра', state=States.IDLE)
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='tomorrow').time()
 async def tomorrow_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user = manager.get_user(user_id)
@@ -251,6 +267,7 @@ async def tomorrow_handler(msg: types.Message) -> None:
 
 @dp.message_handler(commands=['now'], state=States.IDLE)
 @dp.message_handler(lambda msg: msg.text.lower() == 'сейчас', state=States.IDLE)
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='now').time()
 async def now_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user = manager.get_user(user_id)
@@ -267,6 +284,7 @@ async def now_handler(msg: types.Message) -> None:
 @dp.message_handler(
     lambda msg: msg.text.lower() == 'расписание', state=States.IDLE
 )
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='schedule').time()
 async def schedule_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     user = manager.get_user(user_id)
@@ -281,6 +299,7 @@ async def schedule_handler(msg: types.Message) -> None:
 
 
 @dp.message_handler(commands=['settings'], state='*')
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='settings').time()
 async def settings_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     keyboard = Keyboard.build_settings_keyboard(user_id)
@@ -288,6 +307,7 @@ async def settings_handler(msg: types.Message) -> None:
 
 
 @dp.message_handler(commands=['week'], state='*')
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='week').time()
 async def week_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     await bot.send_message(
@@ -297,12 +317,14 @@ async def week_handler(msg: types.Message) -> None:
 
 
 @dp.message_handler(commands=['times'], state='*')
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='times').time()
 async def times_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
     await bot.send_message(user_id, schedule.time_schedule())
 
 
 @dp.message_handler(commands=['logout'], state='*')
+@metrics.COMMAND_LATENCY_SECONDS.labels(command='logout').time()
 @dp.message_handler(lambda msg: msg.text.lower() == 'выйти', state='*')
 async def quit_handler(msg: types.Message) -> None:
     user_id = msg.from_user.id
@@ -489,10 +511,14 @@ async def shutdown(_: Any) -> None:
     await redis.close()
 
 
-if __name__ == '__main__':
+def start_polling():
     executor.start_polling(
         dp,
         skip_updates=BOT_SKIP_UPDATES,
         on_startup=setup,
         on_shutdown=shutdown,
     )
+
+
+if __name__ == '__main__':
+    start_polling()

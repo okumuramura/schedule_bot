@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from schedule_bot import db
+from schedule_bot.db import db
 from schedule_bot.manager import manager, orm_function
 
 __log_format = r'[%(levelname)s] %(message)s'

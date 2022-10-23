@@ -1,6 +1,6 @@
 import pytest
 
-from schedule_bot.updater.parse import parse_lesson_exp, Lesson
+from schedule_bot.updater.parse import Lesson, parse_lesson_exp
 
 
 @pytest.mark.parametrize(

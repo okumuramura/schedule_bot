@@ -2,7 +2,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from sqlalchemy.orm import Session
 
-from schedule_bot import db, logger
+from schedule_bot import logger
+from schedule_bot.db import db
 from schedule_bot.manager import orm_function
 
 
@@ -351,6 +352,17 @@ def add_user(uid: int, commit: bool = True, session: Session = None) -> None:
 def get_all_vip_users(session: Session = None) -> List[db.ActiveUser]:
     return (
         session.query(db.ActiveUser).filter(db.ActiveUser.vip.is_(True)).all()  # type: ignore
+    )
+
+
+@orm_function
+def get_all_vip_users_sorted(session: Session = None) -> List[db.ActiveUser]:
+    return (
+        session.query(db.ActiveUser)
+        .filter(db.ActiveUser.vip.is_(True))
+        .join(db.Group)
+        .order_by(db.Group.group)
+        .all()  # type: ignore
     )
 
 
